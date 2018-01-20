@@ -9,6 +9,9 @@ import logging
 import numpy as np
 from scipy import ndimage
 from six.moves import range as xrange
+from skimage.morphology import extrema
+from skimage import filters
+from skimage import measure
 
 from .config import CONFIG
 from .util import (
@@ -49,7 +52,8 @@ def make_prewitt(size):
     return prewitt
 
 
-def intensity_distance_seeds(image_data, resolution, axis=0, erosion_radius=16, min_sep=24, visualize=False):
+def intensity_distance_seeds(image_data, resolution, axis=0, erosion_radius=16, 
+        min_sep=24, visualize=False):
     """Create seed locations maximally distant from a Sobel filter.
 
     Parameters
@@ -154,8 +158,166 @@ def grid_seeds(image_data, _, grid_step_spacing=1):
     return seeds
 
 
+def distance_transform_seeds(image_data):
+    """Create seed locations maximally distant from thresholded raw image.
+
+    Parameters
+    ----------
+    image_data : ndarray
+
+    Returns
+    -------
+    list of ndarray
+    """
+    seeds = []
+    if image_data.dtype == np.bool:
+        #assuming membrane zero and cells one labeled
+        thresh = image_data
+    else: 
+        # otsu thresholding
+        thresh = image_data < filters.threshold_otsu(image_data)
+    
+    transform = ndimage.distance_transform_cdt(thresh)
+    skmax = extrema.local_maxima(transform)
+    seeds = np.transpose(np.nonzero(skmax))
+    
+    return seeds
+
+
+def membrane_seeds(image_data):
+    """Create seed locations on membrane by thresholding and binary erosion.
+
+    Parameters
+    ----------
+    image_data : ndarray
+
+    Returns
+    -------
+    list of ndarray
+    """
+    seeds = []
+    if image_data.dtype == np.bool:
+        thresh = image_data
+        thresh[0,:,:] = ndimage.binary_erosion(thresh[0,:,:])
+    else:
+        thresh = image_data > filters.threshold_otsu(image_data)
+        thresh[0,:,:] = ndimage.binary_erosion(thresh[0,:,:])
+        #filter small connected components
+        components = measure.label(thresh, background=0)
+        unique, counts = np.unique(components, return_counts=True)
+        idx = counts < 20
+        thresh[components == unique[idx]] = 0
+    
+    seeds = np.transpose(np.nonzero(thresh))
+    
+    return seeds
+
+
+def few_membrane_seeds(image_data):
+    """Create seed locations on membrane by thresholding and binary erosion.
+
+    Parameters
+    ----------
+    image_data : ndarray
+
+    Returns
+    -------
+    list of ndarray
+    """
+    seeds = []
+    if image_data.dtype == np.bool:
+        thresh = image_data
+        thresh[0,:,:] = ndimage.binary_erosion(thresh[0,:,:])
+    else:
+        thresh = image_data > filters.threshold_otsu(image_data)
+        thresh[0,:,:] = ndimage.binary_erosion(thresh[0,:,:])
+        #filter small connected components
+        components = measure.label(thresh, background=0)
+        unique, counts = np.unique(components, return_counts=True)
+        idx = counts < 20
+        thresh[components == unique[idx]] = 0
+    
+    all_seeds = np.transpose(np.nonzero(thresh))
+    idx = np.random.choice(len(all_seeds),15, replace=True)
+    seeds = all_seeds[idx]
+    
+    return seeds
+
+
+
+def local_minima_seeds(image_data):
+    """Create seed locations which are local minimas of the original image.
+
+
+    Parameters
+    ----------
+    image_data : ndarray
+
+    Returns
+    -------
+    list of ndarray
+    """
+
+    seeds = []
+    if image_data.dtype == np.bool:
+        
+        return distance_transform_seeds(image_data)
+    else:
+        skmax = extrema.local_minima(image_data)
+        seeds = np.transpose(np.nonzero(skmax))
+    
+        return seeds
+
+
+def neuron_seeds(image_data, seed_num):
+    seeds = []
+
+    thresh = ndimage.binary_erosion(image_data > 0) 
+    seeds = np.transpose(np.nonzero(thresh))
+    if len(seeds) < 10000:
+        seeds = np.transpose(np.nonzero(image_data))
+    
+    idx = np.random.choice(len(seeds), seed_num, replace=True)
+    seeds = seeds[idx]
+
+    return seeds
+
+
+def cell_interior_seeds(image_data, mask_data):
+    """Create seed locations as connected components wihtin the cells.
+
+    Parameters
+    ----------
+    image_data : ndarray
+
+    Returns
+    -------
+    list of ndarray
+    """
+    seeds = []
+    
+    if image_data.dtype == np.bool:
+        thresh = np.logical_not(image_data)
+    else: 
+        # otsu thresholding
+        thresh = image_data > filters.threshold_otsu(image_data)
+    
+    thresh[0,:,:] = np.logical_or(ndimage.binary_dilation(thresh[0,:,:]), 
+            np.logical_not(mask_data))
+    interior = np.logical_not(thresh)
+    seeds = np.transpose(np.nonzero(interior))
+    
+    return seeds
+
+
 # Note that these must be added separately to the CLI.
 SEED_GENERATORS = {
     'grid': grid_seeds,
     'sobel': intensity_distance_seeds,
+    'membrane': membrane_seeds,
+    'distance_transform': distance_transform_seeds,
+    'local_minima': local_minima_seeds,
+    'cell_interior': cell_interior_seeds,
+    'few_membrane': few_membrane_seeds,
+    'neuron': neuron_seeds
 }

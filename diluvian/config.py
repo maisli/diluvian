@@ -109,7 +109,11 @@ class ModelConfig(BaseConfig):
         return (self.output_fov_shape - 1) // self.output_fov_move_fraction
 
     def subv_moves(self, shape):
-        return np.prod((shape - self.input_fov_shape) // self.move_step + 1)
+        #return np.prod((shape - self.input_fov_shape) // self.move_step + 1)
+        active_axes = np.array(shape) != 1
+        ret = np.array([0, 0, 0], dtype=np.int64)
+        ret[active_axes] = (shape[active_axes] - self.input_fov_shape[active_axes]) // self.move_step[active_axes]
+        return np.prod(ret + 1)
 
     @property
     def training_subv_moves(self):
@@ -318,9 +322,12 @@ class TrainingConfig(BaseConfig):
         self.partitions = settings.get('partitions', {'.*': [2, 1, 1]})
         self.training_partition = settings.get('training_partition', {'.*': [0, 0, 0]})
         self.validation_partition = settings.get('validation_partition', {'.*': [1, 0, 0]})
+        self.test_regex = settings.get('test_regex', None)
+        self.train_regex = settings.get('train_regex', None)
         self.validation_metric = settings.get(
-                'validation_metric',
-                {'metric': 'diluvian.util.binary_f_score', 'threshold': True, 'mode': 'max', 'args': {'beta': 0.5}})
+                'validation_metric', 
+                {'metric': 'diluvian.util.binary_f_score', 
+                    'threshold': True, 'mode': 'max', 'args': {'beta': 0.5}})
         self.patience = int(np.array(settings.get('patience', 10)))
         self.early_abort_epoch = settings.get('early_abort_epoch', None)
         self.early_abort_loss = settings.get('early_abort_loss', None)

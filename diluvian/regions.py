@@ -83,29 +83,40 @@ class Region(object):
         subvolumes = itertools.ifilter(lambda s: s.has_uniform_seed_margin(), subvolumes)
         return itertools.imap(lambda v: Region.from_subvolume(v, **kwargs), subvolumes)
 
-    def __init__(self, image, target=None, seed_vox=None, mask=None, sparse_mask=False, block_padding=None):
+    def __init__(self, image, target=None, seed_vox=None, mask=None, 
+            sparse_mask=False, block_padding=None):
         self.block_padding = block_padding
         self.MOVE_DELTA = CONFIG.model.move_step
         self.queue = queue.PriorityQueue()
         self.visited = set()
         self.image = image
         self.bounds = np.array(image.shape, dtype=np.int64)
+        self.active_axes = np.array(self.bounds) != 1
         if seed_vox is None:
             self.MOVE_GRID_OFFSET = np.array([0, 0, 0], dtype=np.int64)
         else:
-            self.MOVE_GRID_OFFSET = np.mod(seed_vox, self.MOVE_DELTA).astype(np.int64)
-        self.move_bounds = (
-            np.ceil(np.true_divide((CONFIG.model.input_fov_shape - 1) // 2 - self.MOVE_GRID_OFFSET,
-                                   self.MOVE_DELTA)).astype(np.int64),
-            self.vox_to_pos(np.array(self.bounds) - 1 - (CONFIG.model.input_fov_shape - 1) // 2),
-            )
+            self.MOVE_GRID_OFFSET = np.array([0, 0, 0], dtype=np.int64)
+            self.MOVE_GRID_OFFSET[self.active_axes] = np.mod(seed_vox[self.active_axes], 
+                    self.MOVE_DELTA[self.active_axes]).astype(np.int64)
+        
+        lower_bound = np.array([0, 0, 0], dtype=np.int64)
+        lower_bound[self.active_axes] = np.ceil(np.true_divide((
+            CONFIG.model.input_fov_shape[self.active_axes] - 1) 
+            // 2 - self.MOVE_GRID_OFFSET[self.active_axes],
+            self.MOVE_DELTA[self.active_axes])).astype(np.int64)
+        upper_bound = self.vox_to_pos(np.array(self.bounds) - 1 
+                - (CONFIG.model.input_fov_shape - 1) // 2)
+        self.move_bounds = (lower_bound, upper_bound)
+
         self.move_check_thickness = CONFIG.model.move_check_thickness
         if mask is None:
             if isinstance(self.image, OctreeVolume):
-                self.mask = OctreeVolume(self.image.leaf_shape, (np.zeros(3), self.bounds), 'float32')
+                self.mask = OctreeVolume(self.image.leaf_shape, (np.zeros(3), self.bounds), 
+                        'float32')
                 self.mask[:] = np.NAN
             elif sparse_mask:
-                self.mask = OctreeVolume(CONFIG.model.training_subv_shape, (np.zeros(3), self.bounds), 'float32')
+                self.mask = OctreeVolume(CONFIG.model.training_subv_shape, (np.zeros(3), 
+                    self.bounds), 'float32')
                 self.mask[:] = np.NAN
             else:
                 self.mask = np.full(self.bounds, np.NAN, dtype=np.float32)
@@ -122,17 +133,15 @@ class Region(object):
             seed_pos = np.floor_divide(self.move_bounds[0] + self.move_bounds[1], 2)
         else:
             seed_pos = self.vox_to_pos(seed_vox)
-            assert self.pos_in_bounds(seed_pos), \
-                'Seed position (%s) must be in region move bounds (%s, %s).' % \
-                (seed_vox, self.move_bounds[0], self.move_bounds[1])
+            assert self.pos_in_bounds(seed_pos), 'Seed position (%s) must be in region move bounds (%s, %s).' % (seed_vox, self.move_bounds[0], self.move_bounds[1])
         self.seed_pos = seed_pos
         self.queue.put((None, seed_pos))
         self.proximity[tuple(seed_pos)] = 1
         self.seed_vox = self.pos_to_vox(seed_pos)
         if self.target is not None:
             self.target_offset = (self.bounds - self.target.shape) // 2
-            assert np.isclose(self.target[tuple(self.seed_vox - self.target_offset)], CONFIG.model.v_true), \
-                'Seed position should be in target body.'
+            assert np.isclose(self.target[tuple(self.seed_vox - self.target_offset)], 
+                    CONFIG.model.v_true), 'Seed position should be in target body.'
         self.mask[tuple(self.seed_vox)] = CONFIG.model.v_true
         self.visited.add(tuple(self.seed_pos))
 
@@ -161,7 +170,11 @@ class Region(object):
         return Body(hard_mask, self.pos_to_vox(self.seed_pos))
 
     def vox_to_pos(self, vox):
-        return np.floor_divide(vox - self.MOVE_GRID_OFFSET, self.MOVE_DELTA).astype(np.int64)
+        ret = np.array([0, 0, 0], dtype=np.int64)
+        ret[self.active_axes] = np.floor_divide(np.array(vox)[self.active_axes] 
+                - self.MOVE_GRID_OFFSET[self.active_axes], 
+                self.MOVE_DELTA[self.active_axes]).astype('int64')
+        return ret
 
     def pos_to_vox(self, pos):
         return (pos * self.MOVE_DELTA).astype(np.int64) + self.MOVE_GRID_OFFSET
@@ -240,19 +253,29 @@ class Region(object):
             the move direction and a ``v`` indicating the max probability
             in the move plane in that direction.
         """
+        moves_active_axes = []
+        non_active_axis = np.logical_not(self.active_axes)
+        for i in range(3):
+            if self.active_axes[i]:
+                k = np.array([0,0,0]).astype(np.int32)
+                k[i] = 1
+                moves_active_axes.append(k)
+                k = np.array([0,0,0]).astype(np.int32)
+                k[i] = -1
+                moves_active_axes.append(k)
+
         moves = []
-        ctr = np.asarray(mask.shape) // 2
-        for move in map(np.array, [(1, 0, 0), (-1, 0, 0),
-                                   (0, 1, 0), (0, -1, 0),
-                                   (0, 0, 1), (0, 0, -1)]):
-            plane_min = ctr - (-2 * np.maximum(move, 0) + 1) * self.MOVE_DELTA \
-                            - np.abs(move) * (self.move_check_thickness - 1)
-            plane_max = ctr + (+2 * np.minimum(move, 0) + 1) * self.MOVE_DELTA \
-                            + np.abs(move) * (self.move_check_thickness - 1) + 1
-            moves.append({'move': move,
-                          'v': mask[plane_min[0]:plane_max[0],
-                                    plane_min[1]:plane_max[1],
-                                    plane_min[2]:plane_max[2]].max()})
+        ctr = ((np.asarray(mask.shape) - 1) // 2 + 1).astype(np.int32)
+        for move in moves_active_axes:
+            plane_min = (ctr - (-2 * np.maximum(move, 0) + 1) * self.MOVE_DELTA 
+                    - np.abs(move) * (self.move_check_thickness - 1)).astype(np.int32)
+            plane_max = (ctr + (+2 * np.minimum(move, 0) + 1) * self.MOVE_DELTA 
+                    + np.abs(move) * (self.move_check_thickness - 1) + 1).astype(np.int32)
+            plane_min[non_active_axis] = 0
+            plane_max[non_active_axis] = 1
+            moves.append({'move': move, 'v': mask[plane_min[0]:plane_max[0], 
+                plane_min[1]:plane_max[1], plane_min[2]:plane_max[2]].max()})
+        
         return moves
 
     def check_move_neighborhood(self, mask):

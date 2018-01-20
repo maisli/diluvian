@@ -54,6 +54,8 @@ def _make_main_parser():
             '-l', '--log', dest='log_level',
             choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
             help='Set the logging level.')
+    common_parser.add_argument('-g', '--gpu', dest='assigned_gpus', 
+            action='append', default=None, help='Assign one or more GPU IDs.')
 
     parser = argparse.ArgumentParser(description='Train or run flood-filling networks on EM data.')
 
@@ -86,6 +88,25 @@ def _make_main_parser():
             '--metric-plot', action='store_true', dest='metric_plot', default=False,
             help='Plot metric history at the end of training. '
                  'Will be saved as a PNG with the model output base filename.')
+    train_parser.add_argument(
+            '--seed-generator', dest='seed_generator', default='cell_interior', nargs='?',
+            choices=['grid', 'sobel', 'membrane', 'distance_transform', 'local_minima', 
+                'cell_interior', 'neuron'],
+            help='Method to generate seed locations for flood filling.')
+    train_parser.add_argument(
+            '--load-mask', action='store_true', dest='load_mask', default=False,
+            help='Load mask data from hdf5 file if provided.')
+    train_parser.add_argument(
+            '--load-seeds', action='store_true', dest='load_seeds', default=False,
+            help='Load seed data from hdf5 file if provided.')
+    train_parser.add_argument(
+            '--seeds-from-raw-image', action='store_true', dest='seeds_from_raw', default=False,
+            help='Generate seeds from raw image instead of gt.')
+    train_parser.add_argument(
+            '--random-generator-state', action='store_true', dest='random_generator_state', 
+            default=False,
+            help='Each generator will be initialized differently, because images of one video do not differ that much.')
+
 
     fill_common_parser = argparse.ArgumentParser(add_help=False)
     fill_common_parser.add_argument(
@@ -113,8 +134,15 @@ def _make_main_parser():
             '--seed-generator', dest='seed_generator', default='sobel', nargs='?',
             # Would be nice to pull these from .preprocessing.SEED_GENERATORS,
             # but want to avoid importing so that CLI is responsive.
-            choices=['grid', 'sobel'],
+            choices=['grid', 'sobel', 'distance_transform', 'membrane', 'cell_interior', 
+                'local_minima', 'few_membrane', 'neuron'],
             help='Method to generate seed locations for flood filling.')
+    fill_parser.add_argument(
+            '--load-seeds', action='store_true', dest='load_seeds', default=False,
+            help='Load seed data from hdf5 file if provided.')
+    fill_parser.add_argument(
+            '--load-mask', action='store_true', dest='load_mask', default=False,
+            help='Load mask data from hdf5 file if provided.')
     fill_parser.add_argument(
             '--ordered-seeds', action='store_false', dest='shuffle_seeds', default=True,
             help='Do not shuffle order in which seeds are processed.')
@@ -245,7 +273,9 @@ def main():
         init_seeds()
         from .training import EarlyAbortException, train_network
 
-        volumes = load_volumes(args.volume_files, args.in_memory)
+        load_membrane = True if args.seed_generator == 'membrane' else False
+        volumes = load_volumes(args.volume_files, args.in_memory, \
+                CONFIG.training.train_regex, args.load_mask, load_membrane, args.load_seeds)
         while True:
             try:
                 train_network(model_file=args.model_file,
@@ -254,7 +284,11 @@ def main():
                               model_checkpoint_file=args.model_checkpoint_file,
                               tensorboard=args.tensorboard,
                               viewer=args.viewer,
-                              metric_plot=args.metric_plot)
+                              metric_plot=args.metric_plot,
+                              seed_generator=args.seed_generator,
+                              random_generator_state=args.random_generator_state,
+                              seeds_from_raw=args.seeds_from_raw,
+                              assigned_gpus=args.assigned_gpus)
             except EarlyAbortException as inst:
                 if args.early_restart:
                     import numpy as np
@@ -276,7 +310,9 @@ def main():
         init_seeds()
         from .diluvian import fill_volumes_with_model
 
-        volumes = load_volumes(args.volume_files, args.in_memory)
+        load_membrane = True if args.seed_generator == 'membrane' else False
+        volumes = load_volumes(args.volume_files, args.in_memory, \
+                CONFIG.training.test_regex, args.load_mask, load_membrane, args.load_seeds)
         fill_volumes_with_model(args.model_file,
                                 volumes,
                                 args.segmentation_output_file,
@@ -292,7 +328,9 @@ def main():
                                 filter_seeds_by_mask=not args.ignore_mask,
                                 reject_early_termination=args.reject_early_termination,
                                 remask_interval=args.remask_interval,
-                                shuffle_seeds=args.shuffle_seeds)
+                                shuffle_seeds=args.shuffle_seeds,
+                                copy_gt_seeds=args.load_seeds,
+                                assigned_gpus=args.assigned_gpus)
 
     elif args.command == 'sparse-fill':
         # Late import to prevent loading large modules for short CLI commands.
@@ -356,7 +394,8 @@ def main():
                                   moves=args.bounds_num_moves)
 
 
-def load_volumes(volume_files, in_memory, name_regex=None):
+def load_volumes(volume_files, in_memory, name_regex=None, 
+        load_mask=False, load_membrane=False, load_seeds=False):
     """Load HDF5 volumes specified in a TOML description file.
 
     Parameters
@@ -365,6 +404,14 @@ def load_volumes(volume_files, in_memory, name_regex=None):
         Filenames of the TOML volume descriptions to load.
     in_memory : bool
         If true, the entire dataset is read into an in-memory volume.
+    name_regex : str
+        Regex to determine which volumes should be loaded from the hdf5 file.
+    load_mask : bool
+        If true, provided mask data is stored.
+    load_membrane : bool
+        If true, provided membrane data is stored.
+    load_seeds : bool
+        If true, provided seeds data is stored.
 
     Returns
     -------
@@ -377,9 +424,11 @@ def load_volumes(volume_files, in_memory, name_regex=None):
     if volume_files:
         volumes = {}
         for volume_file in volume_files:
-            volumes.update(HDF5Volume.from_toml(volume_file))
+            volumes.update(HDF5Volume.from_toml(volume_file, load_mask, 
+                load_membrane, load_seeds))
     else:
-        volumes = HDF5Volume.from_toml(os.path.join(os.path.dirname(__file__), 'conf', 'cremi_datasets.toml'))
+        volumes = HDF5Volume.from_toml(os.path.join(os.path.dirname(__file__), 
+            'conf', 'cremi_datasets.toml'))
 
     if name_regex is not None:
         name_regex = re.compile(name_regex)

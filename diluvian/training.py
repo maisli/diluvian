@@ -455,7 +455,8 @@ def get_output_margin(model_config):
     return np.floor_divide(model_config.input_fov_shape - model_config.output_fov_shape, 2)
 
 
-def build_validation_gen(validation_volumes):
+def build_validation_gen(validation_volumes, seed_generator=None, 
+        prng_seed_generator=None, seeds_from_raw=False):
     output_margin = get_output_margin(CONFIG.model)
 
     # If there is only one volume, duplicate since more than one is needed
@@ -467,8 +468,13 @@ def build_validation_gen(validation_volumes):
     validation_gens = [
             preprocess_subvolume_generator(
                     v.subvolume_generator(shape=CONFIG.model.validation_subv_shape,
-                                          label_margin=output_margin))
+                                          label_margin=output_margin,
+                                          seed_generator=seed_generator,
+                                          prng_seed=prng_seed_generator.randint(0,10000) 
+                                          if prng_seed_generator is not None else None,
+                                          seeds_from_raw=seeds_from_raw))
             for v in six.itervalues(validation_volumes)]
+    
     if CONFIG.training.augment_validation:
         validation_gens = map(augment_subvolume_generator, validation_gens)
 
@@ -513,7 +519,8 @@ def build_validation_gen(validation_volumes):
             steps_per_epoch=VALIDATION_STEPS)
 
 
-def build_training_gen(training_volumes):
+def build_training_gen(training_volumes, seed_generator=None, 
+        prng_seed_generator=None, seeds_from_raw=False):
     output_margin = get_output_margin(CONFIG.model)
 
     # If there is only one volume, duplicate since more than one is needed
@@ -526,7 +533,11 @@ def build_training_gen(training_volumes):
             augment_subvolume_generator(
                     preprocess_subvolume_generator(
                             v.subvolume_generator(shape=CONFIG.model.training_subv_shape,
-                                                  label_margin=output_margin)))
+                                                  label_margin=output_margin,
+                                                  seed_generator=seed_generator,
+                                                  prng_seed=prng_seed_generator.randint(0,10000) 
+                                                  if prng_seed_generator is not None else None,
+                                                  seeds_from_raw=seeds_from_raw)))
             for v in six.itervalues(training_volumes)]
     random.shuffle(training_gens)
 
@@ -567,8 +578,22 @@ def train_network(
         model_checkpoint_file=None,
         tensorboard=False,
         viewer=False,
-        metric_plot=False):
+        metric_plot=False,
+        seed_generator=None,
+        random_generator_state=False,
+        seeds_from_raw=False,
+        assigned_gpus=None):
+    
     random.seed(CONFIG.random_seed)
+    
+    import os
+    # Only make given GPUs visible to Tensorflow so that it does not allocate
+    # all available memory on all devices.
+    # See: https://stackoverflow.com/questions/37893755
+    if 'CUDA_VISIBLE_DEVICES' not in os.environ:
+        os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+        gpu_id = assigned_gpus[0] if assigned_gpus is not None else str(1)
+        os.environ['CUDA_VISIBLE_DEVICES'] = gpu_id
 
     if model_file is None:
         factory = get_function(CONFIG.network.factory)
@@ -599,11 +624,21 @@ def train_network(
 
     num_training = len(training_volumes)
     num_validation = len(validation_volumes)
+    print(num_training, num_validation)
 
     logging.info('Using {} volumes for training, {} for validation.'.format(num_training, num_validation))
 
     validation = build_validation_gen(validation_volumes)
     training = build_training_gen(training_volumes)
+    
+    prng_seed_generator = None 
+    if random_generator_state:
+        prng_seed_generator = np.random.RandomState(0)
+
+    validation = build_validation_gen(validation_volumes, seed_generator, 
+            prng_seed_generator, seeds_from_raw)
+    training = build_training_gen(training_volumes, seed_generator, 
+            prng_seed_generator, seeds_from_raw)
 
     callbacks = []
     callbacks.extend(validation.callbacks)

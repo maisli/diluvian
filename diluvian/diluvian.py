@@ -75,8 +75,15 @@ def fill_volume_with_model(
         reject_non_seed_components=True,
         reject_early_termination=False,
         remask_interval=None,
-        shuffle_seeds=True):
-    subvolume = volume.get_subvolume(SubvolumeBounds(start=np.zeros(3, dtype=np.int64), stop=volume.shape))
+        shuffle_seeds=True,
+        copy_gt_seeds=False,
+        assigned_gpus=False):
+
+    if CONFIG.training.num_gpus > len(assigned_gpus):
+        num_workers = len(assigned_gpus)
+  
+    subvolume = volume.get_subvolume(SubvolumeBounds(start=np.zeros(3, dtype=np.int64), 
+        stop=volume.shape), copy_gt_seeds)
     # Create an output label volume.
     if resume_prediction is None:
         prediction = np.full_like(subvolume.image, background_label_id, dtype=np.uint64)
@@ -101,7 +108,7 @@ def fill_volume_with_model(
             # all available memory on all devices.
             # See: https://stackoverflow.com/questions/37893755
             os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-            os.environ['CUDA_VISIBLE_DEVICES'] = str(worker_id)
+            os.environ['CUDA_VISIBLE_DEVICES'] = assigned_gpus[worker_id]
 
         with tf.device('/gpu:0'):
             # Late import to avoid Keras import until TF bindings are set.
@@ -168,8 +175,16 @@ def fill_volume_with_model(
             results.put((seed, body))
 
     # Generate seeds from volume.
-    generator = preprocessing.SEED_GENERATORS[seed_generator]
-    seeds = generator(subvolume.image, CONFIG.volume.resolution)
+    if subvolume.gt_seeds is not None:
+        seeds = np.transpose(np.nonzero(subvolume.gt_seeds))
+    else:
+        generator = preprocessing.SEED_GENERATORS[seed_generator]
+        if seed_generator == 'neuron':
+            seeds = generator(subvolume.label_image, 15)
+        elif seed_generator == 'sobel':
+            seeds = generator(subvolume.image, CONFIG.volume.resolution)
+        else:
+            seeds = generator(subvolume.image)
 
     if filter_seeds_by_mask and volume.mask_data is not None:
         seeds = [s for s in seeds if volume.mask_data[tuple(volume.world_coord_to_local(s))]]
@@ -177,8 +192,8 @@ def fill_volume_with_model(
     pbar = tqdm(desc='Seed queue', total=len(seeds), miniters=1, smoothing=0.0)
     label_pbar = tqdm(desc='Labeled vox', total=prediction.size, miniters=1, smoothing=0.0, position=1)
     num_seeds = len(seeds)
-    if shuffle_seeds:
-        random.shuffle(seeds)
+    #if shuffle_seeds:
+    #    random.shuffle(seeds)
     seeds = iter(seeds)
 
     manager = Manager()
@@ -318,10 +333,14 @@ def fill_volume_with_model(
             break
 
         if checkpoint_filename is not None and label_id - last_checkpoint_label > checkpoint_label_interval:
+            if np.max(prediction) <= 255:
+                current_type = np.uint8
+            else:
+                current_type = np.int32
             config = HDF5Volume.write_file(
                     checkpoint_filename + '.hdf5',
                     CONFIG.volume.resolution,
-                    label_data=prediction)
+                    label_data=prediction.astype(current_type))
             config['name'] = 'segmentation checkpoint'
             with open(checkpoint_filename + '.toml', 'wb') as tomlfile:
                 tomlfile.write('# Filling model: {}\n'.format(model_file))
@@ -374,10 +393,15 @@ def fill_volumes_with_model(
                 checkpoint_filename=checkpoint_filename,
                 **kwargs)
 
+        if np.max(prediction) <= 255:
+            current_type = np.uint8
+        else:
+            current_type = np.int32
+
         config = HDF5Volume.write_file(
                 volume_filename + '.hdf5',
                 CONFIG.volume.resolution,
-                label_data=prediction)
+                label_data=prediction.astype(current_type))
         config['name'] = volume_name + ' segmentation'
         with open(volume_filename + '.toml', 'wb') as tomlfile:
             tomlfile.write('# Filling model: {}\n'.format(model_file))
