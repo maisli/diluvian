@@ -92,6 +92,7 @@ class ModelConfig(BaseConfig):
         self.input_fov_shape = np.array(settings.get('input_fov_shape', [17, 33, 33]))
         self.output_fov_shape = np.array(settings.get('output_fov_shape', [17, 33, 33]))
         self.output_fov_move_fraction = int(settings.get('output_fov_move_fraction', 4))
+        self.input_channels = int(settings.get('input_channels', 1))
         self.v_true = float(settings.get('v_true', 0.95))
         self.v_false = float(settings.get('v_false', 0.05))
         self.t_move = float(settings.get('t_move', 0.9))
@@ -344,6 +345,8 @@ class TrainingConfig(BaseConfig):
                 [{'axis': 0, 'prob': 0.05, 'scaling_mean': 0.5, 'scaling_std': 0.1,
                   'center_mean': 1.2, 'center_std': 0.2}])
         self.augment_artifacts = settings.get('augment_artifacts', [])
+        self.augment_elastic = bool(settings.get('augment_elastic', False))
+        self.augment_permute_channels = bool(settings.get('augment_permute_channels', False))
 
 
 class PostprocessingConfig(BaseConfig):

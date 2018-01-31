@@ -19,9 +19,11 @@ from .postprocessing import Body
 from .util import (
         get_color_shader,
         pad_dims,
+        pad_beginning,
         WrappedViewer,
         )
-
+import pdb
+from scipy import misc
 
 class Region(object):
     """A region (single seeded body) for flood filling.
@@ -80,7 +82,7 @@ class Region(object):
 
     @staticmethod
     def from_subvolume_generator(subvolumes, **kwargs):
-        subvolumes = itertools.ifilter(lambda s: s.has_uniform_seed_margin(), subvolumes)
+        #subvolumes = itertools.ifilter(lambda s: s.has_uniform_seed_margin(), subvolumes)
         return itertools.imap(lambda v: Region.from_subvolume(v, **kwargs), subvolumes)
 
     def __init__(self, image, target=None, seed_vox=None, mask=None, 
@@ -90,7 +92,7 @@ class Region(object):
         self.queue = queue.PriorityQueue()
         self.visited = set()
         self.image = image
-        self.bounds = np.array(image.shape, dtype=np.int64)
+        self.bounds = np.array(image.shape[0:-1], dtype=np.int64)
         self.active_axes = np.array(self.bounds) != 1
         if seed_vox is None:
             self.MOVE_GRID_OFFSET = np.array([0, 0, 0], dtype=np.int64)
@@ -122,6 +124,7 @@ class Region(object):
                 self.mask = np.full(self.bounds, np.NAN, dtype=np.float32)
         else:
             self.mask = mask
+        #self.mask = np.full(self.bounds, 0, dtype=np.float32)
         self.target = target
 
         self.bias_against_merge = False
@@ -388,16 +391,24 @@ class Region(object):
                 # moves could queue it.
                 self.visited.remove(tuple(next_pos))
                 mask_block = None
+        
+        if len(self.image.shape) == 4:
+            image_block = self.image[block_min[0]:block_max[0],
+                                     block_min[1]:block_max[1],
+                                     block_min[2]:block_max[2], :]
 
-        image_block = self.image[block_min[0]:block_max[0],
-                                 block_min[1]:block_max[1],
-                                 block_min[2]:block_max[2]]
+        else:
+            image_block = self.image[block_min[0]:block_max[0],
+                                     block_min[1]:block_max[1],
+                                     block_min[2]:block_max[2]]
 
         if np.any(pad_pre) or np.any(pad_post):
             assert self.block_padding is not None, \
                 'Position block extends out of region bounds, but padding is not enabled: {}'.format(next_pos)
+
             pad_width = zip(list(pad_pre), list(pad_post))
-            image_block = np.pad(image_block, pad_width, self.block_padding)
+            #print('block padding: ', self.block_padding)
+            image_block = np.pad(image_block, pad_width + [(0,0)], self.block_padding)
             mask_block = np.pad(mask_block, pad_width, self.block_padding)
 
         if self.target is not None:
@@ -412,8 +423,8 @@ class Region(object):
         else:
             target_block = None
 
-        assert image_block.shape == tuple(CONFIG.model.input_fov_shape), \
-            'Image wrong shape: {}'.format(image_block.shape)
+        #assert image_block.shape == tuple(CONFIG.model.input_fov_shape), \
+                #    'Image wrong shape: {}'.format(image_block.shape)
         assert mask_block.shape == tuple(CONFIG.model.input_fov_shape), \
             'Mask wrong shape: {}'.format(mask_block.shape)
         return {'image': image_block,
@@ -518,7 +529,17 @@ class Region(object):
 
         if progress:
             pbar = tqdm(desc='Move queue', position=progress)
+        #i = 1
         while not self.queue.empty():
+            
+            #print(type(self.mask))
+            #mip = np.amax(self.mask, 0)
+            #print(mip.shape, mip.dtype)
+            #mip = np.floor(mip*255).astype('uint8')
+            #misc.imsave('step_' + str(i) + '.tif', mip)
+            #i += 1
+
+
             batch_block_data = [self.get_next_block() for _ in
                                 itertools.takewhile(lambda _: not self.queue.empty(), range(move_batch_size))]
             batch_block_data = [b for b in batch_block_data if b is not None]
@@ -537,9 +558,9 @@ class Region(object):
                     early_termination = True
                     break
 
-            image_input = np.concatenate([pad_dims(b['image']) for b in batch_block_data])
+            image_input = np.concatenate([pad_beginning(b['image']) for b in batch_block_data])
             mask_input = np.concatenate([pad_dims(b['mask']) for b in batch_block_data])
-
+            
             output = model.predict_on_batch({'image_input': image_input,
                                              'mask_input': mask_input})
 
@@ -629,7 +650,7 @@ class Region(object):
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
 
-            image_data = get_plane(self.image, current_vox, plane)
+            image_data = get_plane(self.image[:,:,:,0], current_vox, plane)
             im = ax.imshow(image_data, cmap='gray')
             im.set_clim([0, 1])
             images['image'][plane] = im
@@ -716,7 +737,6 @@ class Region(object):
 
         ani = animation.FuncAnimation(fig, update_fn, frames=vox_gen(), interval=16, repeat=False, save_count=60*60)
         writer = animation.writers['ffmpeg'](fps=60)
-
         ani.save(movie_filename, writer=writer, dpi=dpi, savefig_kwargs={'facecolor': 'black'})
 
         return ani

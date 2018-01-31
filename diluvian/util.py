@@ -103,6 +103,11 @@ def pad_dims(x):
     return np.expand_dims(np.expand_dims(x, x.ndim), 0)
 
 
+def pad_beginning(x):
+    """Add single-dimensions to the beginning and end of an array."""
+    return np.expand_dims(x, 0)
+
+
 def get_nonzero_aabb(a):
     """Get the axis-aligned bounding box of nonzero elements of a 3D array.
 

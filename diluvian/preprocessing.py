@@ -9,15 +9,13 @@ import logging
 import numpy as np
 from scipy import ndimage
 from six.moves import range as xrange
-from skimage.morphology import extrema
-from skimage import filters
-from skimage import measure
 
 from .config import CONFIG
 from .util import (
         get_color_shader,
         WrappedViewer,
 )
+import pdb
 
 
 def make_prewitt(size):
@@ -169,6 +167,9 @@ def distance_transform_seeds(image_data):
     -------
     list of ndarray
     """
+    from skimage.morphology import extrema
+    from skimage import filters
+    
     seeds = []
     if image_data.dtype == np.bool:
         #assuming membrane zero and cells one labeled
@@ -195,6 +196,8 @@ def membrane_seeds(image_data):
     -------
     list of ndarray
     """
+    from skimage import measure
+    from skimage import filters
     seeds = []
     if image_data.dtype == np.bool:
         thresh = image_data
@@ -224,6 +227,9 @@ def few_membrane_seeds(image_data):
     -------
     list of ndarray
     """
+    from skimage import measure
+    from skimage import filters
+    
     seeds = []
     if image_data.dtype == np.bool:
         thresh = image_data
@@ -257,6 +263,7 @@ def local_minima_seeds(image_data):
     -------
     list of ndarray
     """
+    from skimage.morphology import extrema
 
     seeds = []
     if image_data.dtype == np.bool:
@@ -283,6 +290,23 @@ def neuron_seeds(image_data, seed_num):
     return seeds
 
 
+def neuron_dt_seeds(image_data, seed_num):
+    
+    from skimage.feature import peak_local_max
+    
+    seeds = []
+    thresh = image_data > 0
+    transform = ndimage.distance_transform_cdt(thresh)
+    seeds = peak_local_max(transform, exclude_border=0, min_distance=20)
+    #skmax = extrema.local_maxima(transform)
+
+    if seed_num < len(seeds):
+        idx = np.random.choice(len(seeds), seed_num, replace=True)
+        seeds = seeds[idx]
+    
+    return seeds
+
+
 def cell_interior_seeds(image_data, mask_data):
     """Create seed locations as connected components wihtin the cells.
 
@@ -294,6 +318,7 @@ def cell_interior_seeds(image_data, mask_data):
     -------
     list of ndarray
     """
+    from skimage import filters
     seeds = []
     
     if image_data.dtype == np.bool:
@@ -319,5 +344,6 @@ SEED_GENERATORS = {
     'local_minima': local_minima_seeds,
     'cell_interior': cell_interior_seeds,
     'few_membrane': few_membrane_seeds,
-    'neuron': neuron_seeds
+    'neuron': neuron_seeds,
+    'neuron_dt': neuron_dt_seeds
 }

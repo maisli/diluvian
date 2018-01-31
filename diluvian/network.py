@@ -28,19 +28,21 @@ from keras.models import load_model as keras_load_model, Model
 import keras.optimizers
 
 
-def make_flood_fill_network(input_fov_shape, output_fov_shape, network_config):
+def make_flood_fill_network(input_fov_shape, output_fov_shape, network_config, input_channels):
     """Construct a stacked convolution module flood filling network.
     """
     if network_config.convolution_padding != 'same':
         raise ValueError('ResNet implementation only supports same padding.')
 
-    image_input = Input(shape=tuple(input_fov_shape) + (1,), dtype='float32', name='image_input')
+    image_input = Input(shape=tuple(input_fov_shape) + (input_channels,), 
+            dtype='float32', name='image_input')
     if network_config.rescale_image:
         ffn = Lambda(lambda x: (x - 0.5) * 2.0)(image_input)
     else:
         ffn = image_input
     mask_input = Input(shape=tuple(input_fov_shape) + (1,), dtype='float32', name='mask_input')
     ffn = concatenate([ffn, mask_input])
+    print('network input shape: ', ffn.shape)
 
     # Convolve and activate before beginning the skip connection modules,
     # as discussed in the Appendix of He et al 2016.
@@ -236,7 +238,7 @@ def compile_network(model, optimizer_config):
 
 def load_model(model_file, network_config):
     # Import for loading legacy models.
-    from keras_contrib.layers import Deconvolution3D  # noqa
+   # from keras_contrib.layers import Deconvolution3D  # noqa
 
     model = keras_load_model(model_file)
 

@@ -38,6 +38,7 @@ from .util import (
         get_color_shader,
         get_function,
         pad_dims,
+        pad_beginning,
         Roundrobin,
         WrappedViewer,
         write_keras_history_to_csv,
@@ -53,11 +54,13 @@ from .volumes import (
         partition_volumes,
         PermuteAxesAugmentGenerator,
         RelabelSeedComponentGenerator,
+        ElasticAugmentGenerator,
+        PermuteChannelsAugmentGenerator
         )
 from .regions import (
         Region,
         )
-
+import pdb
 
 def plot_history(history):
     fig = plt.figure()
@@ -258,7 +261,13 @@ def augment_subvolume_generator(subvolume_generator):
         gen = ContrastAugmentGenerator(gen, CONFIG.training.augment_use_both, v['axis'], v['prob'],
                                        v['scaling_mean'], v['scaling_std'],
                                        v['center_mean'], v['center_std'])
-    gen = ClipSubvolumeImageGenerator(gen)
+    
+    if CONFIG.training.augment_elastic:
+        gen = ElasticAugmentGenerator(gen, CONFIG.training.augment_use_both)
+    if CONFIG.training.augment_permute_channels:
+        gen = PermuteChannelsAugmentGenerator(gen, CONFIG.training.augment_use_both)
+
+    gen = ClipSubvolumeImageGenerator(gen, -1.0, 1.0)
 
     return gen
 
@@ -362,7 +371,7 @@ class MovingTrainingGenerator(six.Iterator):
         # data quickly.
         if all(self.fake_mask):
             inputs = collections.OrderedDict({
-                    'image_input': np.repeat(pad_dims(self.fake_block['image']),
+                    'image_input': np.repeat(pad_beginning(self.fake_block['image']),
                                              CONFIG.training.num_gpus, axis=0),
                     'mask_input': np.repeat(pad_dims(self.fake_block['mask']),
                                             CONFIG.training.num_gpus, axis=0)
@@ -416,7 +425,7 @@ class MovingTrainingGenerator(six.Iterator):
                 assert block_data is not None
                 self.fake_block = copy.deepcopy(block_data)
 
-            self.batch_image_input[r] = pad_dims(block_data['image'])
+            self.batch_image_input[r] = pad_beginning(block_data['image'])
             batch_mask_input[r] = pad_dims(block_data['mask'])
             batch_mask_target[r] = pad_dims(block_data['target'])
             self.region_pos[r] = block_data['position']
@@ -587,6 +596,8 @@ def train_network(
     random.seed(CONFIG.random_seed)
     
     import os
+    from datetime import datetime
+
     # Only make given GPUs visible to Tensorflow so that it does not allocate
     # all available memory on all devices.
     # See: https://stackoverflow.com/questions/37893755
@@ -594,12 +605,17 @@ def train_network(
         os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
         gpu_id = assigned_gpus[0] if assigned_gpus is not None else str(1)
         os.environ['CUDA_VISIBLE_DEVICES'] = gpu_id
+        print('CUDA_VISIBLE_DEVICES: ', os.environ['CUDA_VISIBLE_DEVICES'])
+        print('CUDA_ROOT: ', os.environ['CUDA_ROOT'])
 
+    t0 = datetime.now()
+    
     if model_file is None:
         factory = get_function(CONFIG.network.factory)
         ffn = factory(CONFIG.model.input_fov_shape,
                       CONFIG.model.output_fov_shape,
-                      CONFIG.network)
+                      CONFIG.network,
+                      CONFIG.model.input_channels)
     else:
         ffn = load_model(model_file, CONFIG.network)
 
@@ -628,8 +644,8 @@ def train_network(
 
     logging.info('Using {} volumes for training, {} for validation.'.format(num_training, num_validation))
 
-    validation = build_validation_gen(validation_volumes)
-    training = build_training_gen(training_volumes)
+    #validation = build_validation_gen(validation_volumes)
+    #training = build_training_gen(training_volumes)
     
     prng_seed_generator = None 
     if random_generator_state:
@@ -665,6 +681,8 @@ def train_network(
     # generators.
     if tensorboard:
         callbacks.append(TensorBoard())
+    
+    t1 = datetime.now()
 
     history = ffn.fit_generator(
             Roundrobin(*training.data, name='training outer'),
@@ -676,7 +694,11 @@ def train_network(
             validation_data=Roundrobin(*validation.data, name='validation outer'),
             validation_steps=validation.steps_per_epoch)
 
+    t2 = datetime.now()
     write_keras_history_to_csv(history, model_output_filebase + '.csv')
+
+    print('prep elapsed time (hh:mm:ss.ms) {}'.format(t1-t0))
+    print('train elapsed time (hh:mm:ss.ms) {}'.format(t2-t1))
 
     if viewer:
         viz_ex = itertools.islice(validation.data[0], 1)

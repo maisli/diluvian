@@ -24,7 +24,7 @@ from .config import CONFIG
 from .octrees import OctreeVolume
 from .util import get_nonzero_aabb
 from . import preprocessing
-
+import pdb
 
 DimOrder = namedtuple('DimOrder', ('X', 'Y', 'Z'))
 
@@ -150,6 +150,7 @@ class Subvolume(object):
         bool
             True if the rectangular margin around the seed position is uniform.
         """
+        
         margin = np.ceil(np.reciprocal(np.array(CONFIG.volume.resolution),
                                        dtype=np.float64) * seed_margin).astype(np.int64)
 
@@ -158,7 +159,7 @@ class Subvolume(object):
         if mask_target is None:
             return True
         # Seed location in the mask accounting for offset of label from image.
-        ctr = self.seed - (np.asarray(self.image.shape) - np.asarray(mask_target.shape)) // 2
+        ctr = self.seed - (np.asarray(self.label_mask.shape) - np.asarray(mask_target.shape)) // 2
         seed_fov = (ctr - margin, ctr + margin + 1)
         seed_region = mask_target[seed_fov[0][0]:seed_fov[1][0],
                                   seed_fov[0][1]:seed_fov[1][1],
@@ -382,12 +383,42 @@ class PermuteAxesAugmentGenerator(SubvolumeAugmentGenerator):
 
     def augment_subvolume(self):
         subv = self.subvolume
-        subv = Subvolume(np.transpose(subv.image, self.axes),
+        subv = Subvolume(np.transpose(subv.image, self.axes + [3]),
                          np.transpose(subv.label_mask, self.axes) if subv.label_mask is not None else None,
                          subv.seed[self.axes],
                          self.subvolume.label_id)
         return subv
 
+
+class PermuteChannelsAugmentGenerator(SubvolumeAugmentGenerator):
+    """Repeats subvolumes from a subvolume generator with permutation of the RGB channels.
+
+    For each subvolume in the original generator, this generator will yield two
+    subvolumes: the original subvolume and the subvolume with the image,
+    label mask, and seed axes permuted according to a given axes order.
+
+    Parameters
+    ----------
+    subvolume_generator : SubvolumeGenerator
+    return_both : bool
+        If true, return both the original and augmented volume in sequence.
+        If false, return either with equal probability.
+    axes : sequence of int
+    """
+    def __init__(self, subvolume_generator, return_both):
+        super(PermuteChannelsAugmentGenerator, self).__init__(subvolume_generator, return_both)
+
+    def augment_subvolume(self):
+        subv = self.subvolume
+        image = subv.image.copy() 
+        image = np.transpose(image, [3,0,1,2])
+        image = np.random.permutation(image)
+        image = np.transpose(image, [1,2,3,0])
+        subv = Subvolume(image,
+                         subv.label_mask,
+                         subv.seed,
+                         self.subvolume.label_id)
+        return subv
 
 class MissingDataAugmentGenerator(SubvolumeAugmentGenerator):
     """Repeats subvolumes from a subvolume generator with missing data planes.
@@ -621,6 +652,65 @@ class MaskedArtifactAugmentGenerator(SubvolumeAugmentGenerator):
             return None
 
 
+
+class ElasticAugmentGenerator(SubvolumeAugmentGenerator):
+#https://github.com/funkey/augment
+    
+    def __init__(self, subvolume_generator, return_both):
+        super(ElasticAugmentGenerator, self).__init__(subvolume_generator, return_both)
+    
+    def augment_subvolume(self):
+        import augment
+        from skimage import io
+
+        subv = self.subvolume
+        
+        z,y,x,channel = subv.image.shape
+        transformation = augment.create_identity_transformation((z,y,x))
+        # jitter in 3D
+        transformation += augment.create_elastic_transformation(
+                (z,y,x), control_point_spacing = [3,3,3], 
+                jitter_sigma = [6,6,6])
+        # rotate around z axis
+        transformation += augment.create_rotation_transformation(
+                (z,y,x), math.pi/4)
+        # apply transformation
+        subv.image = subv.image.copy()
+        for c in range(channel):
+            subv.image[:,:,:,c] = augment.apply_transformation(
+                    subv.image[:,:,:,c], transformation)
+
+        if subv.label_mask is not None:
+            #visualize original mask
+            subv_id = np.random.randint(0,10000)
+            print('original label mask: ', np.sum(subv.label_mask > 0), subv.label_mask.dtype)
+            export = np.zeros(subv.label_mask.shape, dtype='uint8')
+            export[subv.label_mask > 0] = 255
+            io.imsave('original_' + str(subv_id) + '.tif', export, plugin='tifffile')
+        
+            subv.label_mask = subv.label_mask.copy()
+            subv.label_mask = augment.apply_transformation(
+                    subv.label_mask, transformation)
+            seed_mask = np.zeros(subv.label_mask.shape, dtype=bool)
+            seed_mask[subv.seed] = True
+            seed_mask = augment.apply_transformation(seed_mask, transformation)
+            subv.seed = np.nonzero(seed_mask)
+        
+            export = np.zeros(subv.label_mask.shape, dtype='uint8')
+            export[subv.label_mask > 0] = 255
+            io.imsave('elastic_'+ str(subv_id) + '.tif', export, plugin='tifffile')
+            print('augment label mask: ', np.sum(subv.label_mask > 0), subv.label_mask.dtype)
+            print('cmp label mask: ', np.sum(self.subvolume.label_mask > 0))
+        
+        
+        subv = Subvolume(subv.image,
+                         subv.label_mask,
+                         subv.seed,
+                         subv.label_id)
+        return subv
+
+
+
 class Volume(object):
     DIM = DimOrder(Z=0, Y=1, X=2)
 
@@ -634,6 +724,23 @@ class Volume(object):
         self.seeds_data = seeds_data
         #self.membrane_data = ndimage.binary_dilation(label_data == 0)
         self.membrane_data = None
+        
+        #normalize data in range [0, 1]
+        """if len(image_data.shape) == 4:
+            print('normalize data:')
+            image_data = image_data.astype(np.float32)
+            for channel_id in range(image_data.shape[3]):
+                channel_min = np.min(image_data[:,:,:,channel_id])
+                image_data[:,:,:,channel_id] = (image_data[:,:,:,channel_id] 
+                        - channel_min) / float(np.max(image_data[:,:,:,channel_id]) 
+                                - channel_min)
+                print(np.min(image_data[:,:,:,channel_id]), 
+                        np.max(image_data[:,:,:,channel_id]), 
+                        np.mean(image_data[:,:,:,channel_id]))
+        print(self.image_data.shape, self.image_data.dtype, self.label_data.shape)"""
+
+
+        
 
     def local_coord_to_world(self, a):
         return a
@@ -660,7 +767,7 @@ class Volume(object):
 
     @property
     def shape(self):
-        return tuple(self.world_coord_to_local(np.array(self.image_data.shape)))
+        return tuple(self.world_coord_to_local(np.array(self.label_data.shape))) # image_data
 
     def _get_downsample_from_resolution(self, resolution):
         resolution = np.asarray(resolution)
@@ -703,19 +810,25 @@ class Volume(object):
     def get_subvolume(self, bounds, copy_gt_seeds=False):
         if bounds.start is None or bounds.stop is None:
             raise ValueError('This volume does not support sparse subvolume access.')
-
-        image_subvol = self.image_data[
-                bounds.start[0]:bounds.stop[0],
-                bounds.start[1]:bounds.stop[1],
-                bounds.start[2]:bounds.stop[2]]
+       
+        if len(self.image_data.shape) == 4:
+            image_subvol = self.image_data[
+                    bounds.start[0]:bounds.stop[0],
+                    bounds.start[1]:bounds.stop[1],
+                    bounds.start[2]:bounds.stop[2], :]
+        else:
+            image_subvol = self.image_data[
+                    bounds.start[0]:bounds.stop[0],
+                    bounds.start[1]:bounds.stop[1],
+                    bounds.start[2]:bounds.stop[2]]
 
         image_subvol = self.world_mat_to_local(image_subvol)
         if np.issubdtype(image_subvol.dtype, np.integer):
             image_subvol = image_subvol.astype(np.float32) / 256.0
-
+            
         seed = bounds.seed
         if seed is None:
-            seed = np.array(image_subvol.shape, dtype=np.int64) // 2
+            seed = np.array(image_subvol.shape[0:-1], dtype=np.int64) // 2
 
         if self.label_data is not None:
             label_start = bounds.start + bounds.label_margin
@@ -756,7 +869,7 @@ class Volume(object):
             if label_margin is None:
                 label_margin = np.zeros(3, dtype=np.int64)
             self.label_margin = label_margin
-            self.skip_blank_sections = True
+            self.skip_blank_sections = False
             self.active_axes = np.array(self.shape) != 1
             self.ctr_min = self.margin
             self.ctr_max = (np.array(self.volume.shape) - self.margin - 1).astype(np.int64)
@@ -804,7 +917,7 @@ class Volume(object):
                     generator=preprocessing.SEED_GENERATORS[seed_generator]
                     if self.seeds_from_raw:
                         self.seeds = generator(self.volume.image_data)
-                    elif seed_generator == 'neuron':
+                    elif seed_generator == 'neuron' or seed_generator == 'neuron_dt':
                         self.seeds = generator(self.volume.label_data, 30000)
                     else:
                         self.seeds = generator(self.volume.label_data > 0)
@@ -1151,7 +1264,7 @@ class HDF5Volume(Volume):
             data = kwargs.get('{}_data'.format(channel), None)
             dataset_name = kwargs.get('{}_dataset'.format(channel), default_datasets[channel])
             if data is not None:
-                dataset = h5file.create_dataset(dataset_name, data=data, dtype=data.dtype)
+                dataset = h5file.create_dataset(dataset_name, data=data, dtype=data.dtype, compression='lzf')
                 dataset.attrs['resolution'] = resolution
                 config['{}_dataset'.format(channel)] = dataset_name
 

@@ -35,7 +35,6 @@ from .volumes import (
         )
 from .regions import Region
 
-
 def generate_subvolume_bounds(filename, volumes, num_bounds, sparse=False, moves=None):
     if '{volume}' not in filename:
         raise ValueError('CSV filename must contain "{volume}" for volume name replacement.')
@@ -77,7 +76,7 @@ def fill_volume_with_model(
         remask_interval=None,
         shuffle_seeds=True,
         copy_gt_seeds=False,
-        assigned_gpus=False):
+        assigned_gpus=[]):
 
     if CONFIG.training.num_gpus > len(assigned_gpus):
         num_workers = len(assigned_gpus)
@@ -86,7 +85,7 @@ def fill_volume_with_model(
         stop=volume.shape), copy_gt_seeds)
     # Create an output label volume.
     if resume_prediction is None:
-        prediction = np.full_like(subvolume.image, background_label_id, dtype=np.uint64)
+        prediction = np.full_like(subvolume.image[:,:,:,0], background_label_id, dtype=np.uint64)
         label_id = 0
     else:
         if resume_prediction.shape != subvolume.image.shape:
@@ -179,7 +178,7 @@ def fill_volume_with_model(
         seeds = np.transpose(np.nonzero(subvolume.gt_seeds))
     else:
         generator = preprocessing.SEED_GENERATORS[seed_generator]
-        if seed_generator == 'neuron':
+        if seed_generator == 'neuron' or seed_generator == 'neuron_dt':
             seeds = generator(subvolume.label_image, 15)
         elif seed_generator == 'sobel':
             seeds = generator(subvolume.image, CONFIG.volume.resolution)
@@ -215,6 +214,7 @@ def fill_volume_with_model(
     def queue_next_seed():
         total = 0
         for seed in seeds:
+            print('prediction shape: ', prediction.shape)
             if prediction[seed[0], seed[1], seed[2]] != background_label_id:
                 # This seed has already been filled.
                 total += 1
@@ -370,11 +370,13 @@ def fill_volumes_with_model(
         raise ValueError('HDF5 filename must contain "{volume}" for volume name replacement.')
     if resume_filename is not None and '{volume}' not in resume_filename:
         raise ValueError('TOML resume filename must contain "{volume}" for volume name replacement.')
-
+    
+    #from datetime import datetime
     if partition:
         _, volumes = partition_volumes(volumes)
 
     for volume_name, volume in six.iteritems(volumes):
+        #t0 = datetime.now()
         logging.info('Filling volume %s...', volume_name)
         volume = volume.downsample(CONFIG.volume.resolution)
         if resume_filename is not None:
@@ -392,12 +394,13 @@ def fill_volumes_with_model(
                 resume_prediction=resume_prediction,
                 checkpoint_filename=checkpoint_filename,
                 **kwargs)
-
+        
+        #print('fill ' + volume_name + ' elapsed time (hh:mm:ss.ms) {}'.format(datetime.now() - t0))
+        
         if np.max(prediction) <= 255:
             current_type = np.uint8
         else:
             current_type = np.int32
-
         config = HDF5Volume.write_file(
                 volume_filename + '.hdf5',
                 CONFIG.volume.resolution,
@@ -407,6 +410,7 @@ def fill_volumes_with_model(
             tomlfile.write('# Filling model: {}\n'.format(model_file))
             tomlfile.write('# Filling kwargs: {}\n'.format(str(kwargs)))
             tomlfile.write(str(toml.dumps({'dataset': [config]})))
+        print('file written')
 
         if viewer:
             viewer = WrappedViewer(voxel_size=list(np.flipud(CONFIG.volume.resolution)))
@@ -429,7 +433,24 @@ def fill_region_with_model(
         max_moves=None,
         remask_interval=None,
         sparse=False,
-        moves=None):
+        moves=None,
+        seed_generator='sobel',
+        assigned_gpus=[]):
+    
+    import os
+    import pdb
+
+    # Only make given GPUs visible to Tensorflow so that it does not allocate
+    # all available memory on all devices.
+    # See: https://stackoverflow.com/questions/37893755
+    if 'CUDA_VISIBLE_DEVICES' not in os.environ:
+        os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+        gpu_id = assigned_gpus[0] if assigned_gpus is not None else str(1)
+        os.environ['CUDA_VISIBLE_DEVICES'] = gpu_id
+        print('CUDA_VISIBLE_DEVICES: ', os.environ['CUDA_VISIBLE_DEVICES'])
+        print('CUDA_ROOT: ', os.environ['CUDA_ROOT'])
+
+    print(volumes, augment, bounds_input_file, bias, move_batch_size, max_moves, sparse, moves)
     # Late import to avoid Keras import until TF bindings are set.
     from .network import load_model
 
@@ -456,7 +477,7 @@ def fill_region_with_model(
                     for k in volumes.iterkeys()}
         else:
             gen_kwargs = {
-                    k: {'shape': subv_shape}
+                    k: {'shape': subv_shape, 'seed_generator': seed_generator}
                     for k in volumes.iterkeys()}
     subvolumes = [
             v.downsample(CONFIG.volume.resolution)
@@ -502,7 +523,7 @@ def fill_region_with_model(
                 region_copy = region.unfilled_copy()
                 # Must assign the animation to a variable so that it is not GCed.
                 ani = region_copy.fill_animation(  # noqa
-                        'export.mp4',
+                        'export.avi',
                         model,
                         progress=True,
                         move_batch_size=move_batch_size,

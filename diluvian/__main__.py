@@ -13,6 +13,7 @@ import re
 import six
 
 from .config import CONFIG
+from datetime import datetime
 
 
 def _make_main_parser():
@@ -91,7 +92,7 @@ def _make_main_parser():
     train_parser.add_argument(
             '--seed-generator', dest='seed_generator', default='cell_interior', nargs='?',
             choices=['grid', 'sobel', 'membrane', 'distance_transform', 'local_minima', 
-                'cell_interior', 'neuron'],
+                'cell_interior', 'neuron', 'neuron_dt'],
             help='Method to generate seed locations for flood filling.')
     train_parser.add_argument(
             '--load-mask', action='store_true', dest='load_mask', default=False,
@@ -135,7 +136,7 @@ def _make_main_parser():
             # Would be nice to pull these from .preprocessing.SEED_GENERATORS,
             # but want to avoid importing so that CLI is responsive.
             choices=['grid', 'sobel', 'distance_transform', 'membrane', 'cell_interior', 
-                'local_minima', 'few_membrane', 'neuron'],
+                'local_minima', 'few_membrane', 'neuron', 'neuron_dt'],
             help='Method to generate seed locations for flood filling.')
     fill_parser.add_argument(
             '--load-seeds', action='store_true', dest='load_seeds', default=False,
@@ -191,6 +192,13 @@ def _make_main_parser():
             '-bi', '--bounds-input-file', dest='bounds_input_file', default=None,
             help='Filename for bounds CSV input. Should contain "{volume}", which will be '
                  'substituted with the volume name for each respective volume\'s bounds.')
+    sparse_fill_parser.add_argument(
+            '--seed-generator', dest='seed_generator', default='sobel', nargs='?',
+            # Would be nice to pull these from .preprocessing.SEED_GENERATORS,
+            # but want to avoid importing so that CLI is responsive.
+            choices=['grid', 'sobel', 'distance_transform', 'membrane', 'cell_interior', 
+                'local_minima', 'few_membrane', 'neuron', 'neuron_dt'],
+            help='Method to generate seed locations for flood filling.')
 
     validate_parser = commandparsers.add_parser(  # noqa
             'validate', parents=[common_parser],
@@ -270,6 +278,7 @@ def main():
 
     if args.command == 'train':
         # Late import to prevent loading large modules for short CLI commands.
+        total_t0 = datetime.now()
         init_seeds()
         from .training import EarlyAbortException, train_network
 
@@ -304,9 +313,11 @@ def main():
                     logging.critical(str(inst))
                     break
             break
+        print('Total time elapsed (hh:mm:ss.ms) {}'.format(datetime.now() - total_t0))
 
     elif args.command == 'fill':
         # Late import to prevent loading large modules for short CLI commands.
+        total_t0 = datetime.now()
         init_seeds()
         from .diluvian import fill_volumes_with_model
 
@@ -331,13 +342,15 @@ def main():
                                 shuffle_seeds=args.shuffle_seeds,
                                 copy_gt_seeds=args.load_seeds,
                                 assigned_gpus=args.assigned_gpus)
+        print('Time elapsed (hh:mm:ss.ms) {}'.format(datetime.now() - total_t0))
 
     elif args.command == 'sparse-fill':
         # Late import to prevent loading large modules for short CLI commands.
         init_seeds()
         from .diluvian import fill_region_with_model
 
-        volumes = load_volumes(args.volume_files, args.in_memory)
+        volumes = load_volumes(args.volume_files, args.in_memory, 
+                CONFIG.training.test_regex)
         fill_region_with_model(args.model_file,
                                volumes=volumes,
                                partition=args.partition_volumes,
@@ -347,7 +360,9 @@ def main():
                                move_batch_size=args.move_batch_size,
                                max_moves=args.max_moves,
                                remask_interval=args.remask_interval,
-                               moves=args.bounds_num_moves)
+                               moves=args.bounds_num_moves,
+                               seed_generator=args.seed_generator,
+                               assigned_gpus=args.assigned_gpus)
 
     elif args.command == 'validate':
         # Late import to prevent loading large modules for short CLI commands.
@@ -433,6 +448,7 @@ def load_volumes(volume_files, in_memory, name_regex=None,
     if name_regex is not None:
         name_regex = re.compile(name_regex)
         volumes = {k: v for k, v in six.iteritems(volumes) if name_regex.match(k)}
+    print(len(volumes))
 
     if in_memory:
         print('Copying volumes to memory...')
