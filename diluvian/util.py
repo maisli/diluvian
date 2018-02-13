@@ -15,7 +15,7 @@ import neuroglancer
 import numpy as np
 import six
 from six.moves import input as raw_input
-
+import pdb
 
 class WrappedViewer(neuroglancer.Viewer):
     def __init__(self, voxel_coordinates=None, **kwargs):
@@ -176,6 +176,13 @@ class Roundrobin(six.Iterator):
         self.pending = len(self.iterables)
         self.nexts = itertools.cycle(self.iterables)
         self.name = kwargs.get('name', 'Unknown')
+        self.weights = kwargs.get('weights') if 'weights' in kwargs else None
+        self.samples = {}
+        self.total = 0
+        if self.weights is not None:
+            for weight, iterable in zip(self.weights, self.iterables):
+                self.total += weight
+                self.samples[self.total] = iterable
 
     def __iter__(self):
         return self
@@ -190,8 +197,14 @@ class Roundrobin(six.Iterator):
     def __next__(self):
         while self.pending:
             try:
-                for nextgen in self.nexts:
-                    return six.next(nextgen)
+                if self.weights is not None:
+                    prob = np.random.uniform(0, self.total)
+                    for key in sorted(self.samples.keys()):
+                        if prob < key:
+                            return six.next(self.samples[key])
+                else:
+                    for nextgen in self.nexts:
+                        return six.next(nextgen)
             except StopIteration:
                 self.pending -= 1
                 self.nexts = itertools.cycle(itertools.islice(self.nexts, self.pending))

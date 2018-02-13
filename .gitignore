@@ -23,6 +23,15 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+.env/
+augment/
+
+#conf files
+diluvian/conf/neurons*
+diluvian/conf/cells*
+diluvian/conf/cremi*
+diluvian/conf/conf*
+diluvian/conf/test*
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

@@ -13,7 +13,7 @@ import re
 import six
 
 from .config import CONFIG
-
+from datetime import datetime
 
 def _make_main_parser():
     """Construct the argparse parser for the main CLI.
@@ -100,8 +100,8 @@ def _make_main_parser():
             '--load-seeds', action='store_true', dest='load_seeds', default=False,
             help='Load seed data from hdf5 file if provided.')
     train_parser.add_argument(
-            '--seeds-from-raw-image', action='store_true', dest='seeds_from_raw', default=False,
-            help='Generate seeds from raw image instead of gt.')
+            '--seeds_from_gt', action='store_true', dest='seeds_from_gt', default=False,
+            help='Generate seeds from ground truth segmentation instead of the raw image.')
     train_parser.add_argument(
             '--random-generator-state', action='store_true', dest='random_generator_state', 
             default=False,
@@ -287,7 +287,7 @@ def main():
                               metric_plot=args.metric_plot,
                               seed_generator=args.seed_generator,
                               random_generator_state=args.random_generator_state,
-                              seeds_from_raw=args.seeds_from_raw,
+                              seeds_from_gt=args.seeds_from_gt,
                               assigned_gpus=args.assigned_gpus)
             except EarlyAbortException as inst:
                 if args.early_restart:
@@ -307,6 +307,7 @@ def main():
 
     elif args.command == 'fill':
         # Late import to prevent loading large modules for short CLI commands.
+        total_t0 = datetime.now()
         init_seeds()
         from .diluvian import fill_volumes_with_model
 
@@ -331,6 +332,8 @@ def main():
                                 shuffle_seeds=args.shuffle_seeds,
                                 copy_gt_seeds=args.load_seeds,
                                 assigned_gpus=args.assigned_gpus)
+        print('Total time elapsed (hh:mm:ss.ms) {}'.format(datetime.now() - total_t0))
+
 
     elif args.command == 'sparse-fill':
         # Late import to prevent loading large modules for short CLI commands.

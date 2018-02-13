@@ -24,7 +24,7 @@ from .config import CONFIG
 from .octrees import OctreeVolume
 from .util import get_nonzero_aabb
 from . import preprocessing
-
+import pdb
 
 DimOrder = namedtuple('DimOrder', ('X', 'Y', 'Z'))
 
@@ -106,21 +106,24 @@ class SubvolumeBounds(object):
             fieldnames = cls.__slots__
             writer = csv.writer(csvfile)
             writer.writerow(fieldnames)
+            writer.writerow(fieldnames)
             for bound in bounds:
                 writer.writerow([getattr(bound, f) for f in fieldnames])
 
 
 class Subvolume(object):
     """A subvolume of image data and an optional ground truth object mask."""
-    __slots__ = ('image', 'label_mask', 'seed', 'label_id', 'gt_seeds', 'label_image')
+    __slots__ = ('image', 'label_mask', 'seed', 'label_id', 'gt_seeds', 'label_image', 'mask_image')
 
-    def __init__(self, image, label_mask, seed, label_id, gt_seeds=None, label_image=None):
+    def __init__(self, image, label_mask, seed, label_id, gt_seeds=None, 
+            label_image=None, mask_image=None):
         self.image = image
         self.label_mask = label_mask
         self.seed = seed
         self.label_id = label_id
         self.gt_seeds = gt_seeds
         self.label_image = label_image
+        self.mask_image = mask_image
 
     def f_a(self):
         """Calculate the mask filling fraction of this subvolume.
@@ -177,6 +180,11 @@ class SubvolumeGenerator(six.Iterator):
     def __init__(self, volume, bounds_generator):
         self.volume = volume
         self.bounds_generator = bounds_generator
+        z,y,x = self.volume.seed_gen_mask_data.shape
+        if CONFIG.model.weight_volumes:
+            self.fg_fraction = np.sum(self.volume.seed_gen_mask_data) / float(z * y * x)
+        else:
+            self.fg_fraction = None
 
     @property
     def shape(self):
@@ -311,6 +319,7 @@ class ClipSubvolumeImageGenerator(six.Iterator):
         self.subvolume_generator = subvolume_generator
         self.min_val = min_val
         self.max_val = max_val
+        self.fg_fraction = subvolume_generator.fg_fraction
 
     @property
     def shape(self):
@@ -348,6 +357,7 @@ class MirrorAugmentGenerator(SubvolumeAugmentGenerator):
     def __init__(self, subvolume_generator, return_both, axis):
         super(MirrorAugmentGenerator, self).__init__(subvolume_generator, return_both)
         self.axis = axis
+        self.fg_fraction = subvolume_generator.fg_fraction
 
     def augment_subvolume(self):
         subv = self.subvolume
@@ -357,6 +367,35 @@ class MirrorAugmentGenerator(SubvolumeAugmentGenerator):
         subv = Subvolume(np.flip(subv.image, self.axis),
                          np.flip(subv.label_mask, self.axis) if subv.label_mask is not None else None,
                          seed,
+                         subv.label_id)
+        return subv
+
+class IntensityAugmentGenerator(SubvolumeAugmentGenerator):
+    def __init__(self, subvolume_generator, return_both, scale_min=0.9, scale_max=1.1, shift_min=-0.1, shift_max=0.1, z_section_wise=False):
+        super(IntensityAugmentGenerator, self).__init__(subvolume_generator, return_both)
+        self.scale_min = scale_min
+        self.scale_max = scale_max
+        self.shift_min = shift_min
+        self.shift_max = shift_max
+        self.z_section_wise = z_section_wise
+        self.fg_fraction = subvolume_generator.fg_fraction
+
+    def augment_subvolume(self):
+        subv = self.subvolume
+        image = self.subvolume.image.copy()
+        if self.z_section_wise:
+            for i in range(image.shape[0]):
+                scale = np.random.uniform(self.scale_min, self.scale_max)
+                shift = np.random.uniform(self.shift_min, self.shift_max)
+                image[i,:,:] = np.mean(image[i,:,:]) + (image[i,:,:] - np.mean(image[i,:,:]))*scale + shift
+        else:
+            scale = np.random.uniform(self.scale_min, self.scale_max)
+            shift = np.random.uniform(self.shift_min, self.shift_max)
+            image = np.mean(image) + (image - np.mean(image))*scale + shift
+        
+        subv = Subvolume(image,
+                         subv.label_mask if subv.label_mask is not None else None,
+                         subv.seed,
                          subv.label_id)
         return subv
 
@@ -379,6 +418,7 @@ class PermuteAxesAugmentGenerator(SubvolumeAugmentGenerator):
     def __init__(self, subvolume_generator, return_both, axes):
         super(PermuteAxesAugmentGenerator, self).__init__(subvolume_generator, return_both)
         self.axes = list(axes)
+        self.fg_fraction = subvolume_generator.fg_fraction
 
     def augment_subvolume(self):
         subv = self.subvolume
@@ -413,6 +453,7 @@ class MissingDataAugmentGenerator(SubvolumeAugmentGenerator):
         self.axis = axis
         self.probability = probability
         self.remove_label = remove_label
+        self.fg_fraction = subvolume_generator.fg_fraction
 
     def augment_subvolume(self):
         rolls = np.random.sample(self.shape[self.axis])
@@ -471,6 +512,7 @@ class GaussianNoiseAugmentGenerator(SubvolumeAugmentGenerator):
         self.axis = axis
         self.multiplicative = multiplicative
         self.additive = additive
+        self.fg_fraction = subvolume_generator.fg_fraction
 
     def augment_subvolume(self):
         subv = self.subvolume
@@ -525,6 +567,7 @@ class ContrastAugmentGenerator(SubvolumeAugmentGenerator):
         self.scaling_std = scaling_std
         self.center_mean = center_mean
         self.center_std = center_std
+        self.fg_fraction = subvolume_generator.fg_fraction
 
     def augment_subvolume(self):
         rolls = np.random.sample(self.shape[self.axis])
@@ -590,6 +633,7 @@ class MaskedArtifactAugmentGenerator(SubvolumeAugmentGenerator):
         artifact_shape = self.shape.copy()
         artifact_shape[self.axis] = 1
         self.art_bounds_gen = self.artifacts.subvolume_bounds_generator(shape=artifact_shape)
+        self.fg_fraction = subvolume_generator.fg_fraction
 
     def augment_subvolume(self):
         rolls = np.random.sample(self.shape[self.axis])
@@ -625,11 +669,12 @@ class Volume(object):
     DIM = DimOrder(Z=0, Y=1, X=2)
 
     def __init__(self, resolution, image_data=None, label_data=None, 
-            mask_data=None, seeds_data=None):
+            mask_data=None, seeds_data=None, seed_gen_mask_data=None):
         self.resolution = resolution
         self.image_data = image_data
         self.label_data = label_data
         self.mask_data = mask_data
+        self.seed_gen_mask_data = seed_gen_mask_data
         self._mask_bounds = None
         self.seeds_data = seeds_data
         #self.membrane_data = ndimage.binary_dilation(label_data == 0)
@@ -689,9 +734,9 @@ class Volume(object):
         return SparseWrappedVolume(self, *args)
 
     def subvolume_bounds_generator(self, shape=None, label_margin=None, seed_generator=None, 
-            prng_seed=None, seeds_from_raw=False):
+            prng_seed=None, seeds_from_gt=False):
         return self.SubvolumeBoundsGenerator(self, shape, label_margin, seed_generator, 
-                prng_seed, seeds_from_raw)
+                prng_seed, seeds_from_gt)
 
     def subvolume_generator(self, bounds_generator=None, **kwargs):
         if bounds_generator is None:
@@ -703,7 +748,7 @@ class Volume(object):
     def get_subvolume(self, bounds, copy_gt_seeds=False):
         if bounds.start is None or bounds.stop is None:
             raise ValueError('This volume does not support sparse subvolume access.')
-
+        
         image_subvol = self.image_data[
                 bounds.start[0]:bounds.stop[0],
                 bounds.start[1]:bounds.stop[1],
@@ -715,7 +760,11 @@ class Volume(object):
 
         seed = bounds.seed
         if seed is None:
-            seed = np.array(image_subvol.shape, dtype=np.int64) // 2
+            if CONFIG.model.track_backwards:
+                z,y,x = image_subvol.shape
+                seed = np.array([z-1, y // 2, x // 2]).astype(np.int32)
+            else:
+                seed = np.array(image_subvol.shape, dtype=np.int64) // 2
 
         if self.label_data is not None:
             label_start = bounds.start + bounds.label_margin
@@ -744,22 +793,46 @@ class Volume(object):
                     bounds.start[2]:bounds.stop[2]]
             gt_seeds_subvol = self.world_mat_to_local(gt_seeds_subvol)
 
+        # copy mask data to check if next positions are within mask
+        if CONFIG.model.move_only_in_mask == True:
+            if self.mask_data is not None:
+                mask_start = bounds.start + bounds.label_margin
+                mask_stop = bounds.stop - bounds.label_margin
+
+                mask_subvol = self.mask_data[
+                        mask_start[0]:mask_stop[0],
+                        mask_start[1]:mask_stop[1],
+                        mask_start[2]:mask_stop[2]]
+
+                mask_subvol = self.world_mat_to_local(mask_subvol)
+        else:
+            mask_subvol = None
+
         return Subvolume(image_subvol, label_mask, seed, label_id, gt_seeds_subvol, 
-                label_subvol)
+                    label_subvol, mask_subvol)
 
     class SubvolumeBoundsGenerator(six.Iterator):
         def __init__(self, volume, shape, label_margin=None, seed_generator=None, 
-                prng_seed=None, seeds_from_raw=False):
+                prng_seed=None, seeds_from_gt=False):
+
             self.volume = volume
             self.shape = shape
-            self.margin = np.floor_divide(self.shape, 2).astype(np.int64)
+            self.margin = np.floor_divide(self.shape, 2).astype(np.int32)
             if label_margin is None:
                 label_margin = np.zeros(3, dtype=np.int64)
             self.label_margin = label_margin
             self.skip_blank_sections = True
             self.active_axes = np.array(self.shape) != 1
-            self.ctr_min = self.margin
-            self.ctr_max = (np.array(self.volume.shape) - self.margin - 1).astype(np.int64)
+            if CONFIG.model.track_backwards:
+                z,y,x = self.shape
+                self.margin_min = np.array([z - 1, y // 2, x // 2]).astype(np.int32)
+                self.ctr_min = self.margin_min
+                self.margin_max = np.array([1, math.ceil(y / 2.0), 
+                    math.ceil(x / 2.0)]).astype(np.int32) 
+                self.ctr_max = self.volume.shape - self.margin_max - 1
+            else:
+                self.ctr_min = self.margin
+                self.ctr_max = (np.array(self.volume.shape) - self.margin - 1).astype(np.int32)
             if prng_seed is None:
                 self.prng_seed = CONFIG.random_seed
             else:
@@ -768,14 +841,14 @@ class Volume(object):
 
             # If the volume has a mask channel, further limit ctr_min and
             # ctr_max to lie inside a margin in the AABB of the mask.
-            if self.volume.mask_data is not None:
+            """if self.volume.mask_data is not None:
                 mask_min, mask_max = self.volume.mask_bounds
 
                 mask_min = self.volume.local_coord_to_world(mask_min)
                 mask_max = self.volume.local_coord_to_world(mask_max)
 
                 self.ctr_min = np.maximum(self.ctr_min, mask_min + self.label_margin)
-                self.ctr_max = np.minimum(self.ctr_max, mask_max - self.label_margin - 1)
+                self.ctr_max = np.minimum(self.ctr_max, mask_max - self.label_margin - 1)"""
 
             if np.any(self.ctr_min[self.active_axes] >= self.ctr_max[self.active_axes]):
                 raise ValueError('Cannot generate subvolume bounds: bounds ({}, {})' + 
@@ -790,7 +863,7 @@ class Volume(object):
             
             self.seeds = None
             self.seed_generator = seed_generator
-            self.seeds_from_raw = seeds_from_raw
+            self.seeds_from_gt = seeds_from_gt
             #load_seeds overwrites seed_generator
             if self.volume.seeds_data is not None:
                 self.seeds = np.transpose(np.nonzero(self.volume.seeds_data))
@@ -800,16 +873,20 @@ class Volume(object):
                     self.volume.label_data > 0)) == 0:
                     raise ValueError('Loaded seeds do not correspond with labeled data!')
             else:
-                if seed_generator is not None and seed_generator != 'cell_interior':
+                if seed_generator is not None:
                     generator=preprocessing.SEED_GENERATORS[seed_generator]
-                    if self.seeds_from_raw:
-                        self.seeds = generator(self.volume.image_data)
+                    if self.seeds_from_gt:
+                        self.seeds = generator(self.volume.label_data > 0)
                     elif seed_generator == 'neuron':
                         self.seeds = generator(self.volume.label_data, 30000)
                     else:
-                        self.seeds = generator(self.volume.label_data > 0)
+                        self.seeds = generator(self.volume.image_data)
                     self.seeds = [seed for seed in self.seeds if np.all(seed >= self.ctr_min) 
                             and np.all(seed <= self.ctr_max)]
+                    if self.volume.seed_gen_mask_data is not None:
+                        self.seeds = [seed for seed in self.seeds \
+                                if self.volume.seed_gen_mask_data[tuple(seed)] == True]
+                    print('len seeds: ', len(self.seeds))
                     if len(self.seeds) == 0:
                         raise ValueError('Cannot generate subvolume seeds for seed generator' +
                                 '({})'.format(self.seed_generator))
@@ -823,20 +900,24 @@ class Volume(object):
         def __next__(self):
             while True:
                 if self.seeds is None:
-                    ctr = np.array([0, 0, 0], dtype=np.int64)
+                    ctr = np.array([0, 0, 0], dtype=np.int32)
                     for i in np.transpose(np.nonzero(self.active_axes)):
                         ctr[i] = self.random.randint(self.ctr_min[i], self.ctr_max[i])
                 else:
                     current_seed = self.random.randint(0, len(self.seeds))
-                    ctr = self.seeds[current_seed].astype(np.int64)
-                
-                start = ctr - self.margin
-                stop = ctr + self.margin + np.mod(self.shape, 2).astype(np.int64)
+                    ctr = self.seeds[current_seed].astype(np.int32)
+               
+                if CONFIG.model.track_backwards:
+                    start = ctr - self.margin_min
+                    stop = ctr + self.margin_max
+                else:
+                    start = ctr - self.margin
+                    stop = ctr + self.margin + np.mod(self.shape, 2).astype(np.int32)
 
-                #If the volume has a mask channel, check if seed is within mask channel
-                if self.volume.mask_data is not None:
+                # If the volume has a mask channel, check if seed is within mask channel
+                if self.volume.mask_data is not None and self.volume.seed_gen_mask_data is None:
                     if self.volume.mask_data[ctr[0],ctr[1],ctr[2]] == 0:
-                        logging.debug('Skipping subvolume not entirely in mask.')
+                        logging.debug('Skipping subvolume seed not in mask.')
                         continue
 
                 # Skip subvolumes with seeds in blank sections.
@@ -860,9 +941,14 @@ class Volume(object):
                 if (label_ids == label_ids.item(0)).all():
                     label_id = label_ids.item(0)
                     if label_id != 0:
-                        if self.seed_generator == 'cell_interior':
-                            if self.volume.membrane_data[ctr[0], ctr[1], ctr[2]] == 0:
-                                break
+                
+                        # Check if cell track covers z-dim of subvolume
+                        if CONFIG.model.track_backwards:
+                            z1,y1,x1 = start
+                            z2,y2,x2 = stop
+                            if not (np.any(self.volume.label_data[z1,:,:]==label_id) and \
+                                    np.any(self.volume.label_data[z2,:,:]==label_id)):
+                                continue
                         else:
                             break
 
@@ -885,6 +971,8 @@ class NdarrayVolume(Volume):
         if self.seeds_data is not None:
             self.seeds_data.flags.writeable = False
         if self.mask_data is not None:
+            self.mask_data.flags.writeable = False
+        if self.seed_gen_mask_data is not None:
             self.mask_data.flags.writeable = False
 
 
@@ -955,8 +1043,8 @@ class PartitionedVolume(VolumeView):
         self.partitioning = np.asarray(partitioning)
         self.partition_index = np.asarray(partition_index)
         partition_shape = np.floor_divide(np.array(self.parent.shape), self.partitioning)
-        self.bounds = ((np.multiply(partition_shape, self.partition_index)).astype(np.int64),
-                       (np.multiply(partition_shape, self.partition_index + 1)).astype(np.int64))
+        self.bounds = ((np.multiply(partition_shape, self.partition_index)).astype(np.int32),
+                       (np.multiply(partition_shape, self.partition_index + 1)).astype(np.int32))
 
     def parent_coord_to_world(self, a):
         return a - self.bounds[0]
@@ -992,7 +1080,7 @@ class DownsampledVolume(VolumeView):
         Integral zoom levels to downsample the wrapped volume.
     """
     def __init__(self, parent, downsample):
-        self.scale = np.exp2(downsample).astype(np.int64)
+        self.scale = np.exp2(downsample).astype(np.int32)
         super(DownsampledVolume, self).__init__(
                 parent,
                 np.multiply(parent.resolution, self.scale),
@@ -1118,6 +1206,7 @@ class HDF5Volume(Volume):
                     mask_dataset = dataset.get('mask_dataset', None)
                 mask_bounds = dataset.get('mask_bounds', None)
                 resolution = dataset.get('resolution', None)
+                seed_gen_mask_dataset = dataset.get('seed_gen_mask_dataset', None)
                 seeds_dataset = None
                 if load_seeds:
                     seeds_dataset = dataset.get('seeds_dataset', None)
@@ -1127,7 +1216,8 @@ class HDF5Volume(Volume):
                                     label_dataset,
                                     mask_dataset,
                                     mask_bounds=mask_bounds,
-                                    seeds_dataset=seeds_dataset)
+                                    seeds_dataset=seeds_dataset,
+                                    seed_gen_mask_dataset=seed_gen_mask_dataset)
                 # If the volume configuration specifies an explicit resolution,
                 # override any provided in the HDF5 itself.
                 if resolution:
@@ -1160,7 +1250,8 @@ class HDF5Volume(Volume):
         return config
 
     def __init__(self, orig_file, image_dataset, label_dataset, 
-            mask_dataset, mask_bounds=None, seeds_dataset=None):
+            mask_dataset, mask_bounds=None, seeds_dataset=None,
+            seed_gen_mask_dataset=None):
         logging.debug('Loading HDF5 file "{}"'.format(orig_file))
         self.file = h5py.File(orig_file, 'r')
         self.resolution = None
@@ -1188,8 +1279,15 @@ class HDF5Volume(Volume):
 
         if mask_dataset is not None:
             self.mask_data = self.file[mask_dataset]
+            self.mask_data = np.logical_not(self.mask_data)
         else:
             self.mask_data = None
+
+        if seed_gen_mask_dataset is not None:
+            self.seed_gen_mask_data = self.file[seed_gen_mask_dataset]
+            self.seed_gen_mask_data = np.logical_not(self.seed_gen_mask_data)
+        else:
+            self.seed_gen_mask_data = None
 
         if seeds_dataset is not None:
             self.seeds_data = self.file[seeds_dataset]
@@ -1208,7 +1306,7 @@ class HDF5Volume(Volume):
             self.resolution = np.ones(3)
 
     def to_memory_volume(self):
-        data = ['image_data', 'label_data', 'mask_data', 'seeds_data']
+        data = ['image_data', 'label_data', 'mask_data', 'seeds_data', 'seed_gen_mask_data']
         data = {
                 k: self.world_mat_to_local(getattr(self, k)[:])
                 for k in data if getattr(self, k) is not None}
@@ -1389,5 +1487,5 @@ class ImageStackVolume(Volume):
 
         def __next__(self):
             ctr = np.array([self.random.randint(self.ctr_min[n], self.ctr_max[n])
-                            for n in range(3)]).astype(np.int64)
+                                            for n in range(3)]).astype(np.int64)
             return SubvolumeBounds(seed=ctr)

@@ -236,7 +236,7 @@ def compile_network(model, optimizer_config):
 
 def load_model(model_file, network_config):
     # Import for loading legacy models.
-    from keras_contrib.layers import Deconvolution3D  # noqa
+    # from keras_contrib.layers import Deconvolution3D  # noqa
 
     model = keras_load_model(model_file)
 

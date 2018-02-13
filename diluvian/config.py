@@ -99,6 +99,9 @@ class ModelConfig(BaseConfig):
         self.move_check_thickness = int(settings.get('move_check_thickness', 1))
         self.move_priority = str(settings.get('move_priority', 'descending'))
         self.move_recheck = bool(settings.get('move_recheck', True))
+        self.move_only_in_mask = bool(settings.get('move_only_in_mask', False))
+        self.track_backwards = bool(settings.get('track_backwards', False))
+        self.weight_volumes = bool(settings.get('weight_volumes', False))
         self.training_subv_shape = np.array(settings.get('training_subv_shape',
                                                          self.input_fov_shape + self.move_step * 2))
         self.validation_subv_shape = np.array(settings.get('validation_subv_shape',
@@ -344,6 +347,10 @@ class TrainingConfig(BaseConfig):
                 [{'axis': 0, 'prob': 0.05, 'scaling_mean': 0.5, 'scaling_std': 0.1,
                   'center_mean': 1.2, 'center_std': 0.2}])
         self.augment_artifacts = settings.get('augment_artifacts', [])
+        self.augment_intensity = settings.get(
+                'augment_intensity',
+                [{'scale_min': 0.9, 'scale_max': 1.1, 'shift_min': -0.1, 'shift_max': 0.1,
+                  'z_section_wise': False}])
 
 
 class PostprocessingConfig(BaseConfig):

@@ -34,7 +34,7 @@ from .volumes import (
         SubvolumeBounds,
         )
 from .regions import Region
-
+import pdb
 
 def generate_subvolume_bounds(filename, volumes, num_bounds, sparse=False, moves=None):
     if '{volume}' not in filename:
@@ -99,7 +99,7 @@ def fill_volume_with_model(
     # predicted labels.
     conflict_count = np.full_like(prediction, 0, dtype=np.uint32)
 
-    def worker(worker_id, set_devices, model_file, image, seeds, results, lock, revoked):
+    def worker(worker_id, set_devices, model_file, image, seeds, results, lock, revoked, mask_image):
         lock.acquire()
         import tensorflow as tf
 
@@ -151,7 +151,7 @@ def fill_volume_with_model(
             # Flood-fill and get resulting mask.
             # Allow reading outside the image volume bounds to allow segmentation
             # to fill all the way to the boundary.
-            region = Region(image, seed_vox=seed, sparse_mask=True, block_padding='reflect')
+            region = Region(image, seed_vox=seed, sparse_mask=True, block_padding='reflect', mask_image=mask_image)
             region.bias_against_merge = bias
             early_termination = False
             try:
@@ -185,9 +185,15 @@ def fill_volume_with_model(
             seeds = generator(subvolume.image, CONFIG.volume.resolution)
         else:
             seeds = generator(subvolume.image)
-
     if filter_seeds_by_mask and volume.mask_data is not None:
         seeds = [s for s in seeds if volume.mask_data[tuple(volume.world_coord_to_local(s))]]
+    
+    """if len(seeds) > 500:
+        idx = np.random.choice(len(seeds), 500, replace=True)
+        seeds_array = np.asarray(seeds)
+        seeds_array = seeds_array[idx, :]
+        seeds = list(seeds_array)
+        print('seeds type: ', type(seeds), len(seeds), len(seeds[0]))"""
 
     pbar = tqdm(desc='Seed queue', total=len(seeds), miniters=1, smoothing=0.0)
     label_pbar = tqdm(desc='Labeled vox', total=prediction.size, miniters=1, smoothing=0.0, position=1)
@@ -242,7 +248,7 @@ def fill_volume_with_model(
     loading_lock = manager.Lock()
     for worker_id in range(num_workers):
         w = Process(target=worker, args=(worker_id, set_devices, model_file, subvolume.image,
-                                         seed_queue, results_queue, loading_lock, revoked_seeds))
+                                         seed_queue, results_queue, loading_lock, revoked_seeds, subvolume.mask_image))
         w.start()
         workers.append(w)
 
@@ -317,6 +323,7 @@ def fill_volume_with_model(
                 if tuple(seed) not in revoked_seeds:
                     revoked_seeds.append(tuple(seed))
                 loading_lock.release()
+
         conflict_count[bounds_shape][np.logical_and(np.logical_not(prediction_mask), mask)] += 1
         label_shape = np.logical_and(prediction_mask, mask)
         prediction[bounds_shape][np.logical_and(prediction_mask, mask)] = label_id

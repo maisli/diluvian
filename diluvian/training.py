@@ -53,10 +53,12 @@ from .volumes import (
         partition_volumes,
         PermuteAxesAugmentGenerator,
         RelabelSeedComponentGenerator,
+        IntensityAugmentGenerator,
         )
 from .regions import (
         Region,
         )
+import pdb
 
 
 def plot_history(history):
@@ -258,6 +260,9 @@ def augment_subvolume_generator(subvolume_generator):
         gen = ContrastAugmentGenerator(gen, CONFIG.training.augment_use_both, v['axis'], v['prob'],
                                        v['scaling_mean'], v['scaling_std'],
                                        v['center_mean'], v['center_std'])
+    for v in CONFIG.training.augment_intensity:
+        gen = IntensityAugmentGenerator(gen, CONFIG.training.augment_use_both, v['scale_min'],
+                v['scale_max'], v['shift_min'], v['shift_max'], v['z_section_wise'])
     gen = ClipSubvolumeImageGenerator(gen)
 
     return gen
@@ -402,8 +407,7 @@ class MovingTrainingGenerator(six.Iterator):
                     subvolume = six.next(self.subvolumes)
                     self.epoch_subvolumes += 1
                     self.f_as[r] = subvolume.f_a()
-
-                    self.regions[r] = Region.from_subvolume(subvolume)
+                    self.regions[r] = Region.from_subvolume(subvolume, training=True)
                     if region is not None:
                         self.epoch_move_counts.append(self.move_counts[r])
                     region = self.regions[r]
@@ -448,7 +452,7 @@ class MovingTrainingGenerator(six.Iterator):
                     sample_weights)
 
 
-DataGenerator = collections.namedtuple('DataGenerator', ['data', 'gens', 'callbacks', 'steps_per_epoch'])
+DataGenerator = collections.namedtuple('DataGenerator', ['data', 'gens', 'callbacks', 'steps_per_epoch', 'weights'])
 
 
 def get_output_margin(model_config):
@@ -456,7 +460,7 @@ def get_output_margin(model_config):
 
 
 def build_validation_gen(validation_volumes, seed_generator=None, 
-        prng_seed_generator=None, seeds_from_raw=False):
+        prng_seed_generator=None, seeds_from_gt=False):
     output_margin = get_output_margin(CONFIG.model)
 
     # If there is only one volume, duplicate since more than one is needed
@@ -472,7 +476,7 @@ def build_validation_gen(validation_volumes, seed_generator=None,
                                           seed_generator=seed_generator,
                                           prng_seed=prng_seed_generator.randint(0,10000) 
                                           if prng_seed_generator is not None else None,
-                                          seeds_from_raw=seeds_from_raw))
+                                          seeds_from_gt=seeds_from_gt))
             for v in six.itervalues(validation_volumes)]
     
     if CONFIG.training.augment_validation:
@@ -516,11 +520,12 @@ def build_validation_gen(validation_volumes, seed_generator=None,
             data=validation_data,
             gens=validation_worker_gens,
             callbacks=callbacks,
-            steps_per_epoch=VALIDATION_STEPS)
+            steps_per_epoch=VALIDATION_STEPS,
+            weights=None)
 
 
 def build_training_gen(training_volumes, seed_generator=None, 
-        prng_seed_generator=None, seeds_from_raw=False):
+        prng_seed_generator=None, seeds_from_gt=False):
     output_margin = get_output_margin(CONFIG.model)
 
     # If there is only one volume, duplicate since more than one is needed
@@ -537,7 +542,7 @@ def build_training_gen(training_volumes, seed_generator=None,
                                                   seed_generator=seed_generator,
                                                   prng_seed=prng_seed_generator.randint(0,10000) 
                                                   if prng_seed_generator is not None else None,
-                                                  seeds_from_raw=seeds_from_raw)))
+                                                  seeds_from_gt=seeds_from_gt)))
             for v in six.itervalues(training_volumes)]
     random.shuffle(training_gens)
 
@@ -549,26 +554,39 @@ def build_training_gen(training_volumes, seed_generator=None,
     # Some workers may not receive any generators.
     worker_gens = [g for g in worker_gens if len(g) > 0]
     logging.debug('# of training workers: %s', len(worker_gens))
+    
+    if CONFIG.model.weight_volumes:
+        worker_gens_weights = [[subvol_gen.fg_fraction for subvol_gen in worker_gen] 
+                for worker_gen in worker_gens]
+    else:
+        worker_gens_weights = [None]*len(worker_gens)
 
     kludges = [{'inputs': None, 'outputs': None} for _ in range(CONFIG.training.num_workers)]
     # Create a training data generator for each worker.
     training_data = [MovingTrainingGenerator(
-            Roundrobin(*gen, name='training {}'.format(i)),
+            Roundrobin(*gen, weights=weight, name='training {}'.format(i)),
             CONFIG.training.batch_size,
             kludge,
             f_a_bins=CONFIG.training.fill_factor_bins,
             reset_generators=CONFIG.training.reset_generators)
-            for i, (gen, kludge) in enumerate(zip(worker_gens, kludges))]
+            for i, (gen, kludge, weight) in enumerate(zip(worker_gens, kludges, worker_gens_weights))]
     training_reset_callback = GeneratorReset(training_data)
     callbacks = [training_reset_callback]
 
     TRAINING_STEPS_PER_EPOCH = CONFIG.training.training_size // CONFIG.training.batch_size
+    if CONFIG.model.weight_volumes:
+        training_data_weights = [np.sum(worker_gen_weight) 
+                for worker_gen_weight in worker_gens_weights]
+    else:
+        training_data_weights = None
 
+    
     return DataGenerator(
             data=training_data,
             gens=worker_gens,
             callbacks=callbacks,
-            steps_per_epoch=TRAINING_STEPS_PER_EPOCH)
+            steps_per_epoch=TRAINING_STEPS_PER_EPOCH,
+            weights=training_data_weights)
 
 
 def train_network(
@@ -581,11 +599,10 @@ def train_network(
         metric_plot=False,
         seed_generator=None,
         random_generator_state=False,
-        seeds_from_raw=False,
+        seeds_from_gt=False,
         assigned_gpus=None):
     
     random.seed(CONFIG.random_seed)
-    
     import os
     # Only make given GPUs visible to Tensorflow so that it does not allocate
     # all available memory on all devices.
@@ -628,17 +645,14 @@ def train_network(
 
     logging.info('Using {} volumes for training, {} for validation.'.format(num_training, num_validation))
 
-    validation = build_validation_gen(validation_volumes)
-    training = build_training_gen(training_volumes)
-    
     prng_seed_generator = None 
     if random_generator_state:
         prng_seed_generator = np.random.RandomState(0)
 
     validation = build_validation_gen(validation_volumes, seed_generator, 
-            prng_seed_generator, seeds_from_raw)
+            prng_seed_generator, seeds_from_gt)
     training = build_training_gen(training_volumes, seed_generator, 
-            prng_seed_generator, seeds_from_raw)
+            prng_seed_generator, seeds_from_gt)
 
     callbacks = []
     callbacks.extend(validation.callbacks)
@@ -667,7 +681,7 @@ def train_network(
         callbacks.append(TensorBoard())
 
     history = ffn.fit_generator(
-            Roundrobin(*training.data, name='training outer'),
+            Roundrobin(*training.data, weights=training.weights, name='training outer'),
             steps_per_epoch=training.steps_per_epoch,
             epochs=CONFIG.training.total_epochs,
             max_queue_size=len(training.gens) - 1,

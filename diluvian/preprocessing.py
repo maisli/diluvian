@@ -18,6 +18,7 @@ from .util import (
         get_color_shader,
         WrappedViewer,
 )
+import pdb
 
 
 def make_prewitt(size):
@@ -257,15 +258,17 @@ def local_minima_seeds(image_data):
     -------
     list of ndarray
     """
+    from skimage.feature import peak_local_max
 
     seeds = []
-    if image_data.dtype == np.bool:
-        
+    if image_data.dtype == np.bool: 
         return distance_transform_seeds(image_data)
     else:
-        skmax = extrema.local_minima(image_data)
-        seeds = np.transpose(np.nonzero(skmax))
-    
+        #skmax = extrema.local_minima(image_data)
+        #seeds = np.transpose(np.nonzero(skmax))
+        max_val = 1 if image_data.dtype == np.float else 255
+        image = max_val - image_data
+        seeds = peak_local_max(image, exclude_border=0, min_distance=2) #min_distance=5/10/20
         return seeds
 
 

@@ -21,7 +21,7 @@ from .util import (
         pad_dims,
         WrappedViewer,
         )
-
+import pdb
 
 class Region(object):
     """A region (single seeded body) for flood filling.
@@ -68,7 +68,7 @@ class Region(object):
     """
 
     @staticmethod
-    def from_subvolume(subvolume, **kwargs):
+    def from_subvolume(subvolume, training=False, **kwargs):
         if subvolume.label_mask is not None and np.issubdtype(subvolume.label_mask.dtype, np.bool):
             target = mask_to_output_target(subvolume.label_mask)
         else:
@@ -76,6 +76,8 @@ class Region(object):
         return Region(subvolume.image,
                       target=target,
                       seed_vox=subvolume.seed,
+                      mask_image=subvolume.mask_image,
+                      training=training,
                       **kwargs)
 
     @staticmethod
@@ -83,29 +85,35 @@ class Region(object):
         subvolumes = itertools.ifilter(lambda s: s.has_uniform_seed_margin(), subvolumes)
         return itertools.imap(lambda v: Region.from_subvolume(v, **kwargs), subvolumes)
 
-    def __init__(self, image, target=None, seed_vox=None, mask=None, 
-            sparse_mask=False, block_padding=None):
+    def __init__(self, image, target=None, seed_vox=None, mask_image=None, mask=None, 
+            sparse_mask=False, block_padding=None, training=False):
         self.block_padding = block_padding
         self.MOVE_DELTA = CONFIG.model.move_step
         self.queue = queue.PriorityQueue()
         self.visited = set()
         self.image = image
-        self.bounds = np.array(image.shape, dtype=np.int64)
+        self.mask_image = mask_image
+        self.training = training
+        self.bounds = np.array(image.shape, dtype=np.int32)
         self.active_axes = np.array(self.bounds) != 1
         if seed_vox is None:
-            self.MOVE_GRID_OFFSET = np.array([0, 0, 0], dtype=np.int64)
+            self.MOVE_GRID_OFFSET = np.array([0, 0, 0], dtype=np.int32)
         else:
-            self.MOVE_GRID_OFFSET = np.array([0, 0, 0], dtype=np.int64)
+            self.MOVE_GRID_OFFSET = np.array([0, 0, 0], dtype=np.int32)
             self.MOVE_GRID_OFFSET[self.active_axes] = np.mod(seed_vox[self.active_axes], 
-                    self.MOVE_DELTA[self.active_axes]).astype(np.int64)
+                    self.MOVE_DELTA[self.active_axes]).astype(np.int32)
         
-        lower_bound = np.array([0, 0, 0], dtype=np.int64)
+        lower_bound = np.array([0, 0, 0], dtype=np.int32)
         lower_bound[self.active_axes] = np.ceil(np.true_divide((
             CONFIG.model.input_fov_shape[self.active_axes] - 1) 
             // 2 - self.MOVE_GRID_OFFSET[self.active_axes],
-            self.MOVE_DELTA[self.active_axes])).astype(np.int64)
+            self.MOVE_DELTA[self.active_axes])).astype(np.int32)
         upper_bound = self.vox_to_pos(np.array(self.bounds) - 1 
                 - (CONFIG.model.input_fov_shape - 1) // 2)
+        if CONFIG.model.track_backwards:
+            lower_bound[0] = np.ceil(np.true_divide((CONFIG.model.input_fov_shape -1) 
+                - self.MOVE_GRID_OFFSET, self.MOVE_DELTA)).astype(np.int32)[0]
+            upper_bound[0] = self.vox_to_pos(np.array(self.bounds) - 1)[0]
         self.move_bounds = (lower_bound, upper_bound)
 
         self.move_check_thickness = CONFIG.model.move_check_thickness
@@ -170,14 +178,14 @@ class Region(object):
         return Body(hard_mask, self.pos_to_vox(self.seed_pos))
 
     def vox_to_pos(self, vox):
-        ret = np.array([0, 0, 0], dtype=np.int64)
+        ret = np.array([0, 0, 0], dtype=np.int32)
         ret[self.active_axes] = np.floor_divide(np.array(vox)[self.active_axes] 
                 - self.MOVE_GRID_OFFSET[self.active_axes], 
                 self.MOVE_DELTA[self.active_axes]).astype('int64')
         return ret
 
     def pos_to_vox(self, pos):
-        return (pos * self.MOVE_DELTA).astype(np.int64) + self.MOVE_GRID_OFFSET
+        return (pos * self.MOVE_DELTA).astype(np.int32) + self.MOVE_GRID_OFFSET
 
     def pos_in_bounds(self, pos):
         if self.block_padding is None:
@@ -215,9 +223,17 @@ class Region(object):
         """
         if offset is None:
             offset = np.zeros(3, dtype=vox.dtype)
-        margin = (shape - 1) // 2
-        block_min = vox - margin
-        block_max = vox + margin + 1
+        if CONFIG.model.track_backwards:
+            z,y,x = shape
+            margin_min = np.array([ z - 1, y // 2, x // 2]).astype(np.int32)
+            margin_max = np.array([ 0, y // 2, x // 2]).astype(np.int32)
+            block_min = vox - margin_min
+            block_max = vox + margin_max + 1
+        else:
+            margin = (shape - 1) // 2
+            block_min = vox - margin
+            block_max = vox + margin + 1
+        
         padding_pre = np.maximum(0, -block_min)
         padding_post = np.maximum(0, block_max - self.bounds + offset + offset)
 
@@ -253,7 +269,7 @@ class Region(object):
             the move direction and a ``v`` indicating the max probability
             in the move plane in that direction.
         """
-        moves_active_axes = []
+        """moves_active_axes = []
         non_active_axis = np.logical_not(self.active_axes)
         for i in range(3):
             if self.active_axes[i]:
@@ -265,7 +281,11 @@ class Region(object):
                 moves_active_axes.append(k)
 
         moves = []
-        ctr = ((np.asarray(mask.shape) - 1) // 2 + 1).astype(np.int32)
+        pdb.set_trace()
+        ctr = np.asarray(mask.shape) // 2
+        if CONFIG.model.track_backwards:
+            ctr[0] = mask.shape[0] - 1 
+        
         for move in moves_active_axes:
             plane_min = (ctr - (-2 * np.maximum(move, 0) + 1) * self.MOVE_DELTA 
                     - np.abs(move) * (self.move_check_thickness - 1)).astype(np.int32)
@@ -274,8 +294,29 @@ class Region(object):
             plane_min[non_active_axis] = 0
             plane_max[non_active_axis] = 1
             moves.append({'move': move, 'v': mask[plane_min[0]:plane_max[0], 
-                plane_min[1]:plane_max[1], plane_min[2]:plane_max[2]].max()})
+                plane_min[1]:plane_max[1], plane_min[2]:plane_max[2]].max()})"""
         
+        moves = []
+        ctr = np.asarray(mask.shape) // 2
+        if CONFIG.model.track_backwards:
+            ctr[0] = mask.shape[0] - 1
+            move_along_axes = map(np.array, [(-1, 0, 0), (0, 1, 0),
+                (0, -1, 0), (0, 0, 1), (0, 0, -1)])
+        else:
+            move_along_axes = map(np.array, [(1, 0, 0), (-1, 0, 0), (0, 1, 0),
+                (0, -1, 0), (0, 0, 1), (0, 0, -1)])
+
+
+        for move in move_along_axes:
+            plane_min = ctr - (-2 * np.maximum(move, 0) + 1) * self.MOVE_DELTA \
+                    - np.abs(move) * (self.move_check_thickness - 1)
+            plane_max = ctr + (+2 * np.minimum(move, 0) + 1) * self.MOVE_DELTA \
+                    + np.abs(move) * (self.move_check_thickness - 1) + 1
+            moves.append({'move': move, 
+                'v': mask[plane_min[0]:plane_max[0],
+                    plane_min[1]:plane_max[1],
+                    plane_min[2]:plane_max[2]].max()})
+
         return moves
 
     def check_move_neighborhood(self, mask):
@@ -297,6 +338,10 @@ class Region(object):
         ctr = np.asarray(mask.shape) // 2
         neigh_min = ctr - self.MOVE_DELTA
         neigh_max = ctr + self.MOVE_DELTA + 1
+        if CONFIG.model.track_backwards:
+            ctr[0] = mask.shape[0] - 1
+            neigh_max[0] = mask.shape[0]
+
         neighborhood = mask[map(slice, neigh_min, neigh_max)]
         return np.nanmax(neighborhood) >= CONFIG.model.t_move
 
@@ -336,11 +381,15 @@ class Region(object):
             del self.proximity[tuple(mask_pos)]
         else:
             proximity = None
-
         for move in new_moves:
             new_pos = mask_pos + move['move']
             if not self.pos_in_bounds(new_pos):
                 continue
+            # check if pos within mask
+            new_vox = self.pos_to_vox(new_pos)
+            if self.training == False:
+                if self.mask_image[tuple(new_vox)] == False:
+                    continue
             if tuple(new_pos) not in self.visited and move['v'] >= CONFIG.model.t_move:
                 self.visited.add(tuple(new_pos))
                 priority = self.get_move_priority(new_pos, move['v'], proximity)
@@ -593,7 +642,7 @@ class Region(object):
                 'xy': lambda a, v: a[v[0], :, :],
                 'xz': lambda a, v: a[:, v[1], :],
                 'zy': lambda a, v: np.transpose(a[:, :, v[2]]),
-            }[plane](arr, np.round(vox).astype(np.int64))
+            }[plane](arr, np.round(vox).astype(np.int32))
 
         def get_hv(vox, plane):
             # rel = np.divide(vox, self.bounds)
@@ -647,7 +696,7 @@ class Region(object):
 
             ax.set_aspect(aspect)
 
-        images['last'] = np.round(current_vox).astype(np.int64)
+        images['last'] = np.round(current_vox).astype(np.int32)
 
         plt.tight_layout()
 
@@ -655,7 +704,7 @@ class Region(object):
 
         def update_fn(vox):
             mask_changed = False
-            if np.array_equal(np.round(vox).astype(np.int64), update_fn.next_pos_vox):
+            if np.array_equal(np.round(vox).astype(np.int32), update_fn.next_pos_vox):
                 try:
                     batch_block_data, output = six.next(fill_generator)
                     block_data = batch_block_data[0]
@@ -665,7 +714,7 @@ class Region(object):
 
                 if block_data is not None:
                     update_fn.next_pos_vox = self.pos_to_vox(block_data['position'])
-                    if not np.array_equal(np.round(vox).astype(np.int64), update_fn.next_pos_vox):
+                    if not np.array_equal(np.round(vox).astype(np.int32), update_fn.next_pos_vox):
                         p = update_fn.next_pos_vox - vox
                         steps = np.linspace(0, 1, 16)
                         interp_vox = vox + np.outer(steps, p)
@@ -674,7 +723,7 @@ class Region(object):
                     else:
                         update_fn.vox_queue.put(vox)
 
-            vox_round = np.round(vox).astype(np.int64)
+            vox_round = np.round(vox).astype(np.int32)
             changed_images = []
             for plane, im in six.iteritems(images['image']):
                 if vox_round[planes[plane]] != images['last'][planes[plane]]:
