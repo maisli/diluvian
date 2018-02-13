@@ -180,11 +180,13 @@ class SubvolumeGenerator(six.Iterator):
     def __init__(self, volume, bounds_generator):
         self.volume = volume
         self.bounds_generator = bounds_generator
-        z,y,x = self.volume.seed_gen_mask_data.shape
-        if CONFIG.model.weight_volumes:
-            self.fg_fraction = np.sum(self.volume.seed_gen_mask_data) / float(z * y * x)
-        else:
-            self.fg_fraction = None
+        self.fg_fraction = None
+        if self.volume.seed_gen_mask_data is not None:
+            z,y,x = self.volume.seed_gen_mask_data.shape
+            if CONFIG.model.weight_volumes:
+                self.fg_fraction = np.sum(self.volume.seed_gen_mask_data) / float(z * y * x)
+            else:
+                self.fg_fraction = None
 
     @property
     def shape(self):
