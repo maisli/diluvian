@@ -530,6 +530,8 @@ def build_training_gen(training_volumes, seed_generator=None,
 
     # If there is only one volume, duplicate since more than one is needed
     # for Keras queuing.
+    
+    
     if len(training_volumes) == 1:
         single_vol = six.next(six.itervalues(training_volumes))
         training_volumes = {'dupe {}'.format(n): single_vol for n in range(CONFIG.training.num_workers)}
@@ -642,6 +644,27 @@ def train_network(
     num_training = len(training_volumes)
     num_validation = len(validation_volumes)
     print(num_training, num_validation)
+
+    #check training_volumes if mask and label data have some overlap
+    remove_volumes = []
+    for k, v in six.iteritems(training_volumes):
+        if v.seed_gen_mask_data is not None:
+            if np.sum(np.logical_and(v.label_data > 0, v.seed_gen_mask_data)) <= 200:
+                remove_volumes.append(k)
+    if len(remove_volumes) > 0:
+        for remove_volume in remove_volumes:
+            del training_volumes[remove_volume]
+    remove_volumes = []
+    for k, v in six.iteritems(validation_volumes):
+        if v.seed_gen_mask_data is not None:
+            if np.sum(np.logical_and(v.label_data > 0, v.seed_gen_mask_data)) <= 200:
+                remove_volumes.append(k)
+    if len(remove_volumes) > 0:
+        for remove_volume in remove_volumes:
+            del validation_volumes[remove_volume]
+    num_training = len(training_volumes)
+    num_validation = len(validation_volumes)
+    print('after checking label/mask overlap', num_training, num_validation)
 
     logging.info('Using {} volumes for training, {} for validation.'.format(num_training, num_validation))
 

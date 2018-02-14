@@ -187,7 +187,11 @@ def fill_volume_with_model(
             seeds = generator(subvolume.image)
     if filter_seeds_by_mask and volume.mask_data is not None:
         seeds = [s for s in seeds if volume.mask_data[tuple(volume.world_coord_to_local(s))]]
+    seeds.sort(key=lambda x: x[0], reverse=True)
+    #seeds = seeds[0:50]
     
+    #idx = np.random.choice(len(seeds),15, replace=True)
+    #seeds = list(np.asarray(seeds)[idx,:])
     """if len(seeds) > 500:
         idx = np.random.choice(len(seeds), 500, replace=True)
         seeds_array = np.asarray(seeds)
@@ -340,10 +344,11 @@ def fill_volume_with_model(
             break
 
         if checkpoint_filename is not None and label_id - last_checkpoint_label > checkpoint_label_interval:
-            if np.max(prediction) <= 255:
+            """if np.max(prediction) <= 255:
                 current_type = np.uint8
             else:
-                current_type = np.int32
+                current_type = np.uint32"""
+            current_type = np.uint64
             config = HDF5Volume.write_file(
                     checkpoint_filename + '.hdf5',
                     CONFIG.volume.resolution,
@@ -400,10 +405,11 @@ def fill_volumes_with_model(
                 checkpoint_filename=checkpoint_filename,
                 **kwargs)
 
-        if np.max(prediction) <= 255:
+        """if np.max(prediction) <= 255:
             current_type = np.uint8
         else:
-            current_type = np.int32
+            current_type = np.int32"""
+        current_type = np.uint64
 
         config = HDF5Volume.write_file(
                 volume_filename + '.hdf5',

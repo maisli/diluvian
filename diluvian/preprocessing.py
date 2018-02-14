@@ -246,7 +246,7 @@ def few_membrane_seeds(image_data):
 
 
 
-def local_minima_seeds(image_data):
+def local_minima_seeds(image_data, mask_data=None):
     """Create seed locations which are local minimas of the original image.
 
 
@@ -268,7 +268,10 @@ def local_minima_seeds(image_data):
         #seeds = np.transpose(np.nonzero(skmax))
         max_val = 1 if image_data.dtype == np.float else 255
         image = max_val - image_data
-        seeds = peak_local_max(image, exclude_border=0, min_distance=2) #min_distance=5/10/20
+        if mask_data is not None:
+            seeds = peak_local_max(image, labels=mask_data, exclude_border=0, min_distance=2)
+        else:
+            seeds = peak_local_max(image, exclude_border=0, min_distance=2)
         return seeds
 
 

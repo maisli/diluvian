@@ -881,13 +881,16 @@ class Volume(object):
                         self.seeds = generator(self.volume.label_data > 0)
                     elif seed_generator == 'neuron':
                         self.seeds = generator(self.volume.label_data, 30000)
+                    elif self.volume.seed_gen_mask_data is not None:
+                        self.seeds = generator(self.volume.image_data, 
+                                self.volume.seed_gen_mask_data)
                     else:
                         self.seeds = generator(self.volume.image_data)
                     self.seeds = [seed for seed in self.seeds if np.all(seed >= self.ctr_min) 
                             and np.all(seed <= self.ctr_max)]
-                    if self.volume.seed_gen_mask_data is not None:
-                        self.seeds = [seed for seed in self.seeds \
-                                if self.volume.seed_gen_mask_data[tuple(seed)] == True]
+                    #if self.volume.seed_gen_mask_data is not None:
+                    #    self.seeds = [seed for seed in self.seeds \
+                    #            if self.volume.seed_gen_mask_data[tuple(seed)] == True]
                     print('len seeds: ', len(self.seeds))
                     if len(self.seeds) == 0:
                         raise ValueError('Cannot generate subvolume seeds for seed generator' +
@@ -943,17 +946,8 @@ class Volume(object):
                 if (label_ids == label_ids.item(0)).all():
                     label_id = label_ids.item(0)
                     if label_id != 0:
+                        break
                 
-                        # Check if cell track covers z-dim of subvolume
-                        if CONFIG.model.track_backwards:
-                            z1,y1,x1 = start
-                            z2,y2,x2 = stop
-                            if not (np.any(self.volume.label_data[z1,:,:]==label_id) and \
-                                    np.any(self.volume.label_data[z2,:,:]==label_id)):
-                                continue
-                        else:
-                            break
-
             return SubvolumeBounds(start, stop, label_id=label_id, 
                     label_margin=self.label_margin)
 

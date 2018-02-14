@@ -270,6 +270,7 @@ def main():
 
     if args.command == 'train':
         # Late import to prevent loading large modules for short CLI commands.
+        total_t0 = datetime.now()
         init_seeds()
         from .training import EarlyAbortException, train_network
 
@@ -304,6 +305,7 @@ def main():
                     logging.critical(str(inst))
                     break
             break
+        print('Total time elapsed (hh:mm:ss.ms) {}'.format(datetime.now() - total_t0))
 
     elif args.command == 'fill':
         # Late import to prevent loading large modules for short CLI commands.
