@@ -387,7 +387,7 @@ class Region(object):
                 continue
             # check if pos within mask
             new_vox = self.pos_to_vox(new_pos)
-            if self.training == False:
+            if self.training == False and self.mask_image is not None:
                 if self.mask_image[tuple(new_vox)] == False:
                     continue
             if tuple(new_pos) not in self.visited and move['v'] >= CONFIG.model.t_move:

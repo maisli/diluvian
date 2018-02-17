@@ -24,6 +24,9 @@ from .config import CONFIG
 from .octrees import OctreeVolume
 from .util import get_nonzero_aabb
 from . import preprocessing
+import augment
+import random
+from .coordinate import Coordinate
 import pdb
 
 DimOrder = namedtuple('DimOrder', ('X', 'Y', 'Z'))
@@ -113,10 +116,11 @@ class SubvolumeBounds(object):
 
 class Subvolume(object):
     """A subvolume of image data and an optional ground truth object mask."""
-    __slots__ = ('image', 'label_mask', 'seed', 'label_id', 'gt_seeds', 'label_image', 'mask_image')
+    __slots__ = ('image', 'label_mask', 'seed', 'label_id', 'gt_seeds', 'label_image', 
+            'mask_image', 'bounds')
 
     def __init__(self, image, label_mask, seed, label_id, gt_seeds=None, 
-            label_image=None, mask_image=None):
+            label_image=None, mask_image=None, bounds=None):
         self.image = image
         self.label_mask = label_mask
         self.seed = seed
@@ -124,6 +128,7 @@ class Subvolume(object):
         self.gt_seeds = gt_seeds
         self.label_image = label_image
         self.mask_image = mask_image
+        self.bounds = bounds
 
     def f_a(self):
         """Calculate the mask filling fraction of this subvolume.
@@ -185,8 +190,6 @@ class SubvolumeGenerator(six.Iterator):
             z,y,x = self.volume.seed_gen_mask_data.shape
             if CONFIG.model.weight_volumes:
                 self.fg_fraction = np.sum(self.volume.seed_gen_mask_data) / float(z * y * x)
-            else:
-                self.fg_fraction = None
 
     @property
     def shape(self):
@@ -268,6 +271,7 @@ class SubvolumeAugmentGenerator(six.Iterator):
         self.return_both = return_both
         self.return_single_p = 0.5
         self.subvolume = None
+        self.fg_fraction = subvolume_generator.fg_fraction
 
     @property
     def shape(self):
@@ -359,7 +363,6 @@ class MirrorAugmentGenerator(SubvolumeAugmentGenerator):
     def __init__(self, subvolume_generator, return_both, axis):
         super(MirrorAugmentGenerator, self).__init__(subvolume_generator, return_both)
         self.axis = axis
-        self.fg_fraction = subvolume_generator.fg_fraction
 
     def augment_subvolume(self):
         subv = self.subvolume
@@ -367,20 +370,21 @@ class MirrorAugmentGenerator(SubvolumeAugmentGenerator):
         seed = subv.seed.copy()
         seed[self.axis] = shape - subv.seed[self.axis] - 1
         subv = Subvolume(np.flip(subv.image, self.axis),
-                         np.flip(subv.label_mask, self.axis) if subv.label_mask is not None else None,
+                         np.flip(subv.label_mask, self.axis) \
+                                 if subv.label_mask is not None else None,
                          seed,
                          subv.label_id)
         return subv
 
 class IntensityAugmentGenerator(SubvolumeAugmentGenerator):
-    def __init__(self, subvolume_generator, return_both, scale_min=0.9, scale_max=1.1, shift_min=-0.1, shift_max=0.1, z_section_wise=False):
+    def __init__(self, subvolume_generator, return_both, scale_min=0.9, \
+            scale_max=1.1, shift_min=-0.1, shift_max=0.1, z_section_wise=False):
         super(IntensityAugmentGenerator, self).__init__(subvolume_generator, return_both)
         self.scale_min = scale_min
         self.scale_max = scale_max
         self.shift_min = shift_min
         self.shift_max = shift_max
         self.z_section_wise = z_section_wise
-        self.fg_fraction = subvolume_generator.fg_fraction
 
     def augment_subvolume(self):
         subv = self.subvolume
@@ -389,7 +393,8 @@ class IntensityAugmentGenerator(SubvolumeAugmentGenerator):
             for i in range(image.shape[0]):
                 scale = np.random.uniform(self.scale_min, self.scale_max)
                 shift = np.random.uniform(self.shift_min, self.shift_max)
-                image[i,:,:] = np.mean(image[i,:,:]) + (image[i,:,:] - np.mean(image[i,:,:]))*scale + shift
+                image[i,:,:] = np.mean(image[i,:,:]) + (image[i,:,:] \
+                        - np.mean(image[i,:,:]))*scale + shift
         else:
             scale = np.random.uniform(self.scale_min, self.scale_max)
             shift = np.random.uniform(self.shift_min, self.shift_max)
@@ -420,12 +425,12 @@ class PermuteAxesAugmentGenerator(SubvolumeAugmentGenerator):
     def __init__(self, subvolume_generator, return_both, axes):
         super(PermuteAxesAugmentGenerator, self).__init__(subvolume_generator, return_both)
         self.axes = list(axes)
-        self.fg_fraction = subvolume_generator.fg_fraction
 
     def augment_subvolume(self):
         subv = self.subvolume
         subv = Subvolume(np.transpose(subv.image, self.axes),
-                         np.transpose(subv.label_mask, self.axes) if subv.label_mask is not None else None,
+                         np.transpose(subv.label_mask, self.axes) \
+                                 if subv.label_mask is not None else None,
                          subv.seed[self.axes],
                          self.subvolume.label_id)
         return subv
@@ -455,7 +460,6 @@ class MissingDataAugmentGenerator(SubvolumeAugmentGenerator):
         self.axis = axis
         self.probability = probability
         self.remove_label = remove_label
-        self.fg_fraction = subvolume_generator.fg_fraction
 
     def augment_subvolume(self):
         rolls = np.random.sample(self.shape[self.axis])
@@ -465,7 +469,8 @@ class MissingDataAugmentGenerator(SubvolumeAugmentGenerator):
 
         if missing_sections and missing_sections[0].size:
             subv = self.subvolume
-            mask = subv.label_mask.copy() if subv.label_mask is not None and self.remove_label else subv.label_mask
+            mask = subv.label_mask.copy() if subv.label_mask is not None \
+                    and self.remove_label else subv.label_mask
             subv = Subvolume(subv.image.copy(),
                              mask,
                              subv.seed,
@@ -474,10 +479,11 @@ class MissingDataAugmentGenerator(SubvolumeAugmentGenerator):
             slices[self.axis] = missing_sections
             subv.image[slices] = 0
             if self.remove_label:
-                label_axis_margin = (subv.image.shape[self.axis] - subv.label_mask.shape[self.axis]) // 2
+                label_axis_margin = (subv.image.shape[self.axis] \
+                        - subv.label_mask.shape[self.axis]) // 2
                 label_sections = missing_sections[0] - label_axis_margin
-                label_sections = label_sections[(label_sections >= 0) &
-                                                (label_sections < subv.label_mask.shape[self.axis])]
+                label_sections = label_sections[(label_sections >= 0) & \
+                        (label_sections < subv.label_mask.shape[self.axis])]
                 slices[self.axis] = (label_sections,)
                 subv.label_mask[slices] = False
             return subv
@@ -528,7 +534,8 @@ class GaussianNoiseAugmentGenerator(SubvolumeAugmentGenerator):
         mul_noise = np.random.normal(1.0, self.multiplicative, dim_size).astype(subv.image.dtype)
         add_noise = np.random.normal(0.0, self.additive, dim_size).astype(subv.image.dtype)
 
-        subv = Subvolume(subv.image * mul_noise.reshape(shape_xform) + add_noise.reshape(shape_xform),
+        subv = Subvolume(subv.image * mul_noise.reshape(shape_xform) \
+                + add_noise.reshape(shape_xform),
                          subv.label_mask,
                          subv.seed,
                          subv.label_id)
@@ -619,7 +626,8 @@ class MaskedArtifactAugmentGenerator(SubvolumeAugmentGenerator):
         as an alpha for blending image data from this artifact file with
         the original subvolume image data.
     """
-    def __init__(self, subvolume_generator, return_both, axis, probability, artifact_volume_file, cache):
+    def __init__(self, subvolume_generator, return_both, axis, probability, \
+            artifact_volume_file, cache):
         super(MaskedArtifactAugmentGenerator, self).__init__(subvolume_generator, return_both)
         self.axis = axis
         self.probability = probability
@@ -635,7 +643,6 @@ class MaskedArtifactAugmentGenerator(SubvolumeAugmentGenerator):
         artifact_shape = self.shape.copy()
         artifact_shape[self.axis] = 1
         self.art_bounds_gen = self.artifacts.subvolume_bounds_generator(shape=artifact_shape)
-        self.fg_fraction = subvolume_generator.fg_fraction
 
     def augment_subvolume(self):
         rolls = np.random.sample(self.shape[self.axis])
@@ -665,6 +672,193 @@ class MaskedArtifactAugmentGenerator(SubvolumeAugmentGenerator):
             return subv
         else:
             return None
+
+class ElasticAugmentGenerator(SubvolumeAugmentGenerator):
+    """Repeats subvolumes from a subvolume generator with elastic augmentation.
+
+    For each subvolume in the original generator, this generator will yield two
+    subvolumes: the original subvolume and the subvolume with the image,
+    label mask, and seed elastically transformed.
+    
+    Based on gunpowder's elastic transform node, credited to Jan Funke:
+    https://github.com/funkey/gunpowder/blob/release-v0.3/gunpowder/nodes/elastic_augment.py
+
+    Parameters
+    ----------
+    subvolume_generator : SubvolumeGenerator
+    return_both : bool
+        If true, return both the original and augmented volume in sequence.
+        If false, return either with equal probability.
+    control_point_spacing : tuple of int
+        Distance between control points for the elastic deformation, in voxels per dimension.
+    jitter_sigma : tuple of float
+        Standard deviation of control point jitter distribution, in voxels per dimension.
+    rotation_interval : two floats
+        Interval to randomly sample rotation angles from (0,2PI)
+    prob_slip : float
+        Probability of a section to "slip", i.e., be independently moved in x-y.
+    prob_shift : float
+        Probability of a section and all following sections to move in x-y.
+    max_misalign : int
+        Maximal voxels to shift in x and y. Samples will be drawn uniformly.
+    subsample : int
+        Instead of creating an elastic transformation on the full resolution, create one 
+        subsampled by the given factor, and linearly interpolate to obtain the full 
+        resolution transformation. This can significantly speed up this node, at the expense 
+        of having visible piecewise linear deformations for large factors. Usually, a factor 
+        of 4 can savely by used without noticable changes. However, the default is 1 (i.e., 
+        no subsampling).
+    """
+    def __init__(self, subvolume_generator, return_both, control_point_spacing, \
+            jitter_sigma, rotation_interval, prob_slip=0, prob_shift=0, max_misalign=0, \
+            subsample=1):
+        super(ElasticAugmentGenerator, self).__init__(subvolume_generator, return_both)
+        self.control_point_spacing = control_point_spacing
+        self.jitter_sigma = jitter_sigma
+        self.rotation_interval = rotation_interval
+        self.prob_slip = prob_slip
+        self.prob_shift = prob_shift
+        self.max_misalign = max_misalign
+        self.subsample = subsample
+    
+    
+    def __random_offset(self):
+        
+        return Coordinate((0,) + tuple(self.max_misalign - random.randint(0, 
+            2*int(self.max_misalign)) for d in range(2)))
+
+    
+    def __misalign(self):
+
+        num_sections = self.transformation[0].shape[0]
+        
+        shifts = [Coordinate((0,0,0))]*num_sections
+        for z in range(num_sections):
+            r = random.random()
+            
+            if r <= self.prob_slip:
+               
+                shifts[z] = self.__random_offset()
+            
+            elif r <= self.prob_slip + self.prob_shift:
+                
+                offset = self.__random_offset()
+                for zp in range(z, num_sections):
+                    shifts[zp] += offset
+                    
+        logging.debug("misaligning sections with " + str(shifts))
+        
+        dims = 3
+        bb_min = tuple(int(math.floor(self.transformation[d].min())) for d in range(dims))
+        bb_max = tuple(int(math.ceil(self.transformation[d].max())) + 1 
+                for d in range(dims))
+        logging.debug("min/max of transformation: " + str(bb_min) + "/" + str(bb_max))
+        
+        for z in range(num_sections):
+            self.transformation[1][z,:,:] += shifts[z][1]
+            self.transformation[2][z,:,:] += shifts[z][2]
+
+        bb_min = tuple(int(math.floor(self.transformation[d].min())) for d in range(dims))
+        bb_max = tuple(int(math.ceil(self.transformation[d].max())) + 1 
+                for d in range(dims))
+        logging.debug("min/max of transformation after misalignment: " + 
+                str(bb_min) + "/" + str(bb_max))
+
+
+    def augment_subvolume(self):
+        
+        # get volume data
+        subv = self.subvolume
+        bounds = subv.bounds
+        subv_gen = self.subvolume_generator
+        volume_image = subv_gen.volume.image_data
+        label_image = np.asarray(subv_gen.volume.label_data == subv.label_id, dtype=np.uint8)
+        seed_image = np.zeros(volume_image.shape, dtype=np.int32)
+       
+        # get seed and bigger subvolume to apply transformation to
+        z,y,x = subv.image.shape
+        if CONFIG.model.track_backwards:
+            seed = np.array([bounds.start[0] + z - 1, bounds.start[1] + y // 2, 
+                bounds.start[2] + x // 2]).astype(np.int32)
+            start = seed - np.asarray([int(math.floor(1.5 * z)), y, x], dtype=np.int32)
+            stop = seed + np.asarray([int(math.ceil(0.5 * z)), y, x], dtype=np.int32) 
+        else:
+            seed = bounds.start + np.array(subv.image.shape, dtype=np.int32) // 2
+            start = seed - np.asarray([z, y, x], dtype=np.int32)
+            stop = seed + np.asarray([z, y, x], dtype=np.int32)
+        
+        assert label_image[tuple(seed)] == True, "Seed not in current label mask"
+        seed_image[tuple(seed)] = 1
+        seed_image = np.logical_and(label_image, ndimage.binary_dilation(seed_image, 
+            iterations=3))
+        seed_image = ndimage.distance_transform_edt(seed_image)
+
+        # apply padding if necessary
+        if np.any(start < 0) or np.any(stop >= volume_image.shape):
+            before = abs(np.minimum(start, [0,0,0]))
+            after = np.maximum(stop-volume_image.shape, [0,0,0])
+            volume_image = np.pad(volume_image, [(b,a) for b,a in zip(before, after)], 
+                    'symmetric')
+            label_image = np.pad(label_image, [(b,a) for b,a in zip(before, after)],
+                    'symmetric')
+            seed_image = np.pad(seed_image, [(b,a) for b,a in zip(before, after)],
+                    'symmetric')
+            start = start + before
+        
+        volume_image = volume_image[start[0]:stop[0],start[1]:stop[1],start[2]:stop[2]]
+        label_image = label_image[start[0]:stop[0],start[1]:stop[1],start[2]:stop[2]]
+        seed_image = seed_image[start[0]:stop[0],start[1]:stop[1],start[2]:stop[2]]
+
+        # get elastic transformation
+        current_rotation = np.random.uniform(self.rotation_interval[0], 
+                self.rotation_interval[1])
+        self.transformation = augment.create_identity_transformation(volume_image.shape, 
+                subsample = self.subsample)
+        if sum(self.jitter_sigma) > 0:
+            self.transformation += augment.create_elastic_transformation(
+                    volume_image.shape, control_point_spacing = self.control_point_spacing,
+                    jitter_sigma = self.jitter_sigma, subsample = self.subsample)
+        if current_rotation != 0:
+            self.transformation += augment.create_rotation_transformation(volume_image.shape,
+                    angle=current_rotation, subsample=self.subsample)
+        if self.subsample > 1:
+            self.transformation = augment.upscale_transformation(self.transformation, 
+                    volume_image.shape)
+        if self.prob_slip + self.prob_shift > 0:
+            self.__misalign()
+       
+        # apply transformation
+        volume_image = augment.apply_transformation(volume_image, self.transformation, 
+                interpolate=True)
+        label_image = np.asarray(augment.apply_transformation(label_image, self.transformation,
+                interpolate=False), dtype=bool)
+        seed_image = augment.apply_transformation(seed_image, self.transformation, 
+                interpolate=True)
+        seed_image[label_image == 0] = 0
+        seed = np.asarray(np.unravel_index(np.argmax(seed_image), seed_image.shape), 
+                dtype=np.int32)
+        
+        # get transformed subvolume 
+        if CONFIG.model.track_backwards:
+            z,y,x = subv.image.shape
+            start = seed - np.array([z - 1, y // 2, x // 2]).astype(np.int32)
+            stop = seed + np.array([1, math.ceil(y / 2.0), 
+                math.ceil(x / 2.0)]).astype(np.int32)
+            subvol_seed = np.array([z - 1, y // 2, x // 2]).astype(np.int32)
+        else:
+            margin = np.floor_divide(subv.image.shape, 2).astype(np.int32)
+            start = seed - margin
+            stop = seed + margin + np.mod(subv.image.shape, 2).astype(np.int32)
+            subvol_seed = np.array(subv.image.shape, dtype=np.int32) // 2
+        
+        subvol_image = volume_image[start[0]:stop[0], start[1]:stop[1], start[2]:stop[2]]
+        subvol_label = label_image[start[0]:stop[0], start[1]:stop[1], start[2]:stop[2]]
+
+        subv = Subvolume(subvol_image,
+                         subvol_label,
+                         subvol_seed,
+                         self.subvolume.label_id)
+        return subv
 
 
 class Volume(object):
@@ -811,7 +1005,7 @@ class Volume(object):
             mask_subvol = None
 
         return Subvolume(image_subvol, label_mask, seed, label_id, gt_seeds_subvol, 
-                    label_subvol, mask_subvol)
+                    label_subvol, mask_subvol, bounds)
 
     class SubvolumeBoundsGenerator(six.Iterator):
         def __init__(self, volume, shape, label_margin=None, seed_generator=None, 

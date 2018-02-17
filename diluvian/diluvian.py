@@ -151,7 +151,8 @@ def fill_volume_with_model(
             # Flood-fill and get resulting mask.
             # Allow reading outside the image volume bounds to allow segmentation
             # to fill all the way to the boundary.
-            region = Region(image, seed_vox=seed, sparse_mask=True, block_padding='reflect', mask_image=mask_image)
+            region = Region(image, seed_vox=seed, sparse_mask=True, block_padding='reflect', 
+                    mask_image=mask_image)
             region.bias_against_merge = bias
             early_termination = False
             try:
@@ -188,16 +189,10 @@ def fill_volume_with_model(
     if filter_seeds_by_mask and volume.mask_data is not None:
         seeds = [s for s in seeds if volume.mask_data[tuple(volume.world_coord_to_local(s))]]
     seeds.sort(key=lambda x: x[0], reverse=True)
-    #seeds = seeds[0:50]
+    #seeds = seeds[0:30]
     
     #idx = np.random.choice(len(seeds),15, replace=True)
     #seeds = list(np.asarray(seeds)[idx,:])
-    """if len(seeds) > 500:
-        idx = np.random.choice(len(seeds), 500, replace=True)
-        seeds_array = np.asarray(seeds)
-        seeds_array = seeds_array[idx, :]
-        seeds = list(seeds_array)
-        print('seeds type: ', type(seeds), len(seeds), len(seeds[0]))"""
 
     pbar = tqdm(desc='Seed queue', total=len(seeds), miniters=1, smoothing=0.0)
     label_pbar = tqdm(desc='Labeled vox', total=prediction.size, miniters=1, smoothing=0.0, position=1)

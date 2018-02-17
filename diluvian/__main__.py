@@ -15,6 +15,7 @@ import six
 from .config import CONFIG
 from datetime import datetime
 
+
 def _make_main_parser():
     """Construct the argparse parser for the main CLI.
 

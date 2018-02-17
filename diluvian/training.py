@@ -54,6 +54,7 @@ from .volumes import (
         PermuteAxesAugmentGenerator,
         RelabelSeedComponentGenerator,
         IntensityAugmentGenerator,
+        ElasticAugmentGenerator,
         )
 from .regions import (
         Region,
@@ -243,23 +244,29 @@ def augment_subvolume_generator(subvolume_generator):
     diluvian.volumes.SubvolumeGenerator
     """
     gen = subvolume_generator
+    for v in CONFIG.training.augment_elastic:
+        gen = ElasticAugmentGenerator(gen, CONFIG.training.augment_use_both, 
+                v['control_point_spacing'], v['jitter_sigma'], v['rotation_interval'],
+                v['prob_slip'], v['prob_shift'], v['max_misalign'], v['subsample'])
     for axes in CONFIG.training.augment_permute_axes:
         gen = PermuteAxesAugmentGenerator(gen, CONFIG.training.augment_use_both, axes)
     for axis in CONFIG.training.augment_mirrors:
         gen = MirrorAugmentGenerator(gen, CONFIG.training.augment_use_both, axis)
     for v in CONFIG.training.augment_noise:
-        gen = GaussianNoiseAugmentGenerator(gen, CONFIG.training.augment_use_both, v['axis'], v['mul'], v['add'])
+        gen = GaussianNoiseAugmentGenerator(gen, CONFIG.training.augment_use_both, 
+                v['axis'], v['mul'], v['add'])
     for v in CONFIG.training.augment_artifacts:
         if 'cache' not in v:
             v['cache'] = {}
-        gen = MaskedArtifactAugmentGenerator(gen, CONFIG.training.augment_use_both,
-                                             v['axis'], v['prob'], v['volume_file'], v['cache'])
+        gen = MaskedArtifactAugmentGenerator(gen, CONFIG.training.augment_use_both, 
+                v['axis'], v['prob'], v['volume_file'], v['cache'])
     for v in CONFIG.training.augment_missing_data:
-        gen = MissingDataAugmentGenerator(gen, CONFIG.training.augment_use_both, v['axis'], v['prob'])
+        gen = MissingDataAugmentGenerator(gen, CONFIG.training.augment_use_both, 
+                v['axis'], v['prob'])
     for v in CONFIG.training.augment_contrast:
-        gen = ContrastAugmentGenerator(gen, CONFIG.training.augment_use_both, v['axis'], v['prob'],
-                                       v['scaling_mean'], v['scaling_std'],
-                                       v['center_mean'], v['center_std'])
+        gen = ContrastAugmentGenerator(gen, CONFIG.training.augment_use_both, 
+                v['axis'], v['prob'], v['scaling_mean'], v['scaling_std'], 
+                v['center_mean'], v['center_std'])
     for v in CONFIG.training.augment_intensity:
         gen = IntensityAugmentGenerator(gen, CONFIG.training.augment_use_both, v['scale_min'],
                 v['scale_max'], v['shift_min'], v['shift_max'], v['z_section_wise'])
@@ -648,6 +655,7 @@ def train_network(
     #check training_volumes if mask and label data have some overlap
     remove_volumes = []
     for k, v in six.iteritems(training_volumes):
+        #print(k, np.max(v.label_data))
         if v.seed_gen_mask_data is not None:
             if np.sum(np.logical_and(v.label_data > 0, v.seed_gen_mask_data)) <= 200:
                 remove_volumes.append(k)
@@ -656,6 +664,7 @@ def train_network(
             del training_volumes[remove_volume]
     remove_volumes = []
     for k, v in six.iteritems(validation_volumes):
+        #print(k, np.max(v.label_data))
         if v.seed_gen_mask_data is not None:
             if np.sum(np.logical_and(v.label_data > 0, v.seed_gen_mask_data)) <= 200:
                 remove_volumes.append(k)

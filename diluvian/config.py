@@ -13,7 +13,7 @@ import os
 import numpy as np
 import pytoml as toml
 import six
-
+import pdb
 
 class BaseConfig(object):
     """Base class for configuration objects.
@@ -340,7 +340,8 @@ class TrainingConfig(BaseConfig):
         self.augment_use_both = bool(settings.get('augment_use_both', True))
         self.augment_mirrors = [int(x) for x in settings.get('augment_mirrors', [0, 1, 2])]
         self.augment_permute_axes = settings.get('augment_permute_axes', [[0, 2, 1]])
-        self.augment_missing_data = settings.get('augment_missing_data', [{'axis': 0, 'prob': 0.01}])
+        self.augment_missing_data = settings.get('augment_missing_data', 
+                [{'axis': 0, 'prob': 0.01}])
         self.augment_noise = settings.get('augment_noise', [{'axis': 0, 'mul': 0.1, 'add': 0.1}])
         self.augment_contrast = settings.get(
                 'augment_contrast',
@@ -351,6 +352,7 @@ class TrainingConfig(BaseConfig):
                 'augment_intensity',
                 [{'scale_min': 0.9, 'scale_max': 1.1, 'shift_min': -0.1, 'shift_max': 0.1,
                   'z_section_wise': False}])
+        self.augment_elastic = settings.get('augment_elastic', [])
 
 
 class PostprocessingConfig(BaseConfig):
