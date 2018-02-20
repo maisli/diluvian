@@ -243,6 +243,8 @@ class TrainingConfig(BaseConfig):
         Number of samples to use for validation **from each volume**.
     total_epochs : int
         Maximum number of training epochs.
+    num_epochs_without_validation : int
+        Number of training epochs to run without validation, for speed-up.
     reset_generators : bool
         Reset training generators after each epoch, so that the training
         examples at each epoch are identical.
@@ -321,6 +323,7 @@ class TrainingConfig(BaseConfig):
         self.training_size = int(settings.get('training_size', 256))
         self.validation_size = int(settings.get('validation_size', 256))
         self.total_epochs = int(settings.get('total_epochs', 100))
+        self.num_epochs_without_validation = int(settings.get('num_epochs_without_validation', 30))
         self.reset_generators = bool(settings.get('reset_generators', False))
         self.fill_factor_bins = settings.get('fill_factor_bins', None)
         if self.fill_factor_bins is not None:
