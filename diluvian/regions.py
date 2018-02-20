@@ -111,9 +111,10 @@ class Region(object):
         upper_bound = self.vox_to_pos(np.array(self.bounds) - 1 
                 - (CONFIG.model.input_fov_shape - 1) // 2)
         if CONFIG.model.track_backwards:
-            lower_bound[0] = np.ceil(np.true_divide((CONFIG.model.input_fov_shape -1) 
-                - self.MOVE_GRID_OFFSET, self.MOVE_DELTA)).astype(np.int32)[0]
-            upper_bound[0] = self.vox_to_pos(np.array(self.bounds) - 1)[0]
+            if CONFIG.model.seed_position == 'border':
+                lower_bound[0] = np.ceil(np.true_divide((CONFIG.model.input_fov_shape -1) 
+                    - self.MOVE_GRID_OFFSET, self.MOVE_DELTA)).astype(np.int32)[0]
+                upper_bound[0] = self.vox_to_pos(np.array(self.bounds) - 1)[0]
         self.move_bounds = (lower_bound, upper_bound)
 
         self.move_check_thickness = CONFIG.model.move_check_thickness
@@ -136,12 +137,11 @@ class Region(object):
         self.move_based_on_new_mask = False
         self.prioritize_proximity = CONFIG.model.move_priority == 'proximity'
         self.proximity = {}
-
         if seed_vox is None:
             seed_pos = np.floor_divide(self.move_bounds[0] + self.move_bounds[1], 2)
         else:
             seed_pos = self.vox_to_pos(seed_vox)
-            assert self.pos_in_bounds(seed_pos), 'Seed position (%s) must be in region move bounds (%s, %s).' % (seed_vox, self.move_bounds[0], self.move_bounds[1])
+            assert self.pos_in_bounds(seed_pos), 'Seed position (%s, %s) must be in region move bounds (%s, %s).' % (seed_vox, seed_pos, self.move_bounds[0], self.move_bounds[1])
         self.seed_pos = seed_pos
         self.queue.put((None, seed_pos))
         self.proximity[tuple(seed_pos)] = 1
@@ -223,7 +223,7 @@ class Region(object):
         """
         if offset is None:
             offset = np.zeros(3, dtype=vox.dtype)
-        if CONFIG.model.track_backwards:
+        if CONFIG.model.track_backwards and CONFIG.model.seed_position == 'border':
             z,y,x = shape
             margin_min = np.array([ z - 1, y // 2, x // 2]).astype(np.int32)
             margin_max = np.array([ 0, y // 2, x // 2]).astype(np.int32)
@@ -269,41 +269,19 @@ class Region(object):
             the move direction and a ``v`` indicating the max probability
             in the move plane in that direction.
         """
-        """moves_active_axes = []
-        non_active_axis = np.logical_not(self.active_axes)
-        for i in range(3):
-            if self.active_axes[i]:
-                k = np.array([0,0,0]).astype(np.int32)
-                k[i] = 1
-                moves_active_axes.append(k)
-                k = np.array([0,0,0]).astype(np.int32)
-                k[i] = -1
-                moves_active_axes.append(k)
-
-        moves = []
-        pdb.set_trace()
-        ctr = np.asarray(mask.shape) // 2
-        if CONFIG.model.track_backwards:
-            ctr[0] = mask.shape[0] - 1 
-        
-        for move in moves_active_axes:
-            plane_min = (ctr - (-2 * np.maximum(move, 0) + 1) * self.MOVE_DELTA 
-                    - np.abs(move) * (self.move_check_thickness - 1)).astype(np.int32)
-            plane_max = (ctr + (+2 * np.minimum(move, 0) + 1) * self.MOVE_DELTA 
-                    + np.abs(move) * (self.move_check_thickness - 1) + 1).astype(np.int32)
-            plane_min[non_active_axis] = 0
-            plane_max[non_active_axis] = 1
-            moves.append({'move': move, 'v': mask[plane_min[0]:plane_max[0], 
-                plane_min[1]:plane_max[1], plane_min[2]:plane_max[2]].max()})"""
         
         moves = []
         ctr = np.asarray(mask.shape) // 2
         if CONFIG.model.track_backwards:
-            ctr[0] = mask.shape[0] - 1
+            if CONFIG.model.seed_position == 'border':
+                ctr[0] = mask.shape[0] - 1
+            move_along_axes = map(np.array, [(-1, 0, 0), (0, 1, 0),
+                (0, -1, 0), (0, 0, 1), (0, 0, -1)])
+        elif CONFIG.model.dont_move_backwards:
             move_along_axes = map(np.array, [(-1, 0, 0), (0, 1, 0),
                 (0, -1, 0), (0, 0, 1), (0, 0, -1)])
         else:
-            move_along_axes = map(np.array, [(1, 0, 0), (-1, 0, 0), (0, 1, 0),
+            move_along_axes = map(np.array, [(1, 0, 0),(-1, 0, 0), (0, 1, 0),
                 (0, -1, 0), (0, 0, 1), (0, 0, -1)])
 
 
@@ -316,7 +294,7 @@ class Region(object):
                 'v': mask[plane_min[0]:plane_max[0],
                     plane_min[1]:plane_max[1],
                     plane_min[2]:plane_max[2]].max()})
-
+        
         return moves
 
     def check_move_neighborhood(self, mask):
@@ -338,7 +316,7 @@ class Region(object):
         ctr = np.asarray(mask.shape) // 2
         neigh_min = ctr - self.MOVE_DELTA
         neigh_max = ctr + self.MOVE_DELTA + 1
-        if CONFIG.model.track_backwards:
+        if CONFIG.model.track_backwards and CONFIG.model.seed_position == 'border':
             ctr[0] = mask.shape[0] - 1
             neigh_max[0] = mask.shape[0]
 
@@ -513,8 +491,8 @@ class Region(object):
     class EarlyFillTermination(Exception):
         pass
 
-    def fill(self, model, progress=False, move_batch_size=1, max_moves=None, stopping_callback=None,
-             remask_interval=None, generator=False):
+    def fill(self, model, progress=False, move_batch_size=1, max_moves=None, 
+            stopping_callback=None, remask_interval=None, generator=False):
         """Flood fill this region.
 
         Note this returns a generator, so must be iterated to start filling.

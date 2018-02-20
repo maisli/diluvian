@@ -101,11 +101,14 @@ class ModelConfig(BaseConfig):
         self.move_recheck = bool(settings.get('move_recheck', True))
         self.move_only_in_mask = bool(settings.get('move_only_in_mask', False))
         self.track_backwards = bool(settings.get('track_backwards', False))
+        self.seed_position = str(settings.get('seed_position', 'center'))
         self.weight_volumes = bool(settings.get('weight_volumes', False))
         self.training_subv_shape = np.array(settings.get('training_subv_shape',
                                                          self.input_fov_shape + self.move_step * 2))
         self.validation_subv_shape = np.array(settings.get('validation_subv_shape',
                                                            self.input_fov_shape + self.move_step * 4))
+        self.dont_move_backwards = bool(settings.get('dont_move_backwards', False))
+
 
     @property
     def move_step(self):

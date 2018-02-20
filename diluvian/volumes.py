@@ -28,9 +28,9 @@ import augment
 import random
 from .coordinate import Coordinate
 import pdb
+import datetime
 
 DimOrder = namedtuple('DimOrder', ('X', 'Y', 'Z'))
-
 
 def partition_volumes(volumes, downsample=True):
     """Paritition volumes into training and validation based on configuration.
@@ -771,53 +771,61 @@ class ElasticAugmentGenerator(SubvolumeAugmentGenerator):
         subv = self.subvolume
         bounds = subv.bounds
         subv_gen = self.subvolume_generator
-        volume_image = subv_gen.volume.image_data
-        label_image = np.asarray(subv_gen.volume.label_data == subv.label_id, dtype=np.uint8)
-        seed_image = np.zeros(volume_image.shape, dtype=np.int32)
+        volume_image = subv_gen.volume.image_data.copy()
+        if np.issubdtype(volume_image.dtype, np.integer):
+            volume_image = volume_image.astype(np.float32) / 256.0
+        label_image = subv_gen.volume.label_data.copy()
+        seed_image = np.zeros(volume_image.shape, dtype=np.float32)
        
         # get seed and bigger subvolume to apply transformation to
         z,y,x = subv.image.shape
         if CONFIG.model.track_backwards:
-            seed = np.array([bounds.start[0] + z - 1, bounds.start[1] + y // 2, 
-                bounds.start[2] + x // 2]).astype(np.int32)
-            start = seed - np.asarray([int(math.floor(1.5 * z)), y, x], dtype=np.int32)
-            stop = seed + np.asarray([int(math.ceil(0.5 * z)), y, x], dtype=np.int32) 
+            if CONFIG.model.seed_position == 'border':
+                seed = np.array([bounds.start[0] + z - 1, bounds.start[1] + y // 2, 
+                    bounds.start[2] + x // 2]).astype(np.int32)
+                start = seed - np.asarray([int(math.floor(1.5 * z)), y, x], dtype=np.int32)
+                stop = seed + np.asarray([int(math.ceil(0.5 * z)), y, x], dtype=np.int32)
+            else:
+                seed = np.array([bounds.stop[0] - CONFIG.model.input_fov_shape[0] // 2 - 1, 
+                    bounds.start[1] + y // 2, bounds.start[2] + x // 2]).astype(np.int32)
+                start = seed - np.asarray([int(math.floor(1.3*z)), y, x], dtype=np.int32)
+                stop = seed + np.asarray([int(math.ceil(0.7*z)), y, x], dtype=np.int32)
         else:
             seed = bounds.start + np.array(subv.image.shape, dtype=np.int32) // 2
             start = seed - np.asarray([z, y, x], dtype=np.int32)
             stop = seed + np.asarray([z, y, x], dtype=np.int32)
+        seed_image[tuple(seed)] = 1.0
         
-        assert label_image[tuple(seed)] == True, "Seed not in current label mask"
-        seed_image[tuple(seed)] = 1
-        seed_image = np.logical_and(label_image, ndimage.binary_dilation(seed_image, 
-            iterations=3))
-        seed_image = ndimage.distance_transform_edt(seed_image)
-
         # apply padding if necessary
         if np.any(start < 0) or np.any(stop >= volume_image.shape):
             before = abs(np.minimum(start, [0,0,0]))
             after = np.maximum(stop-volume_image.shape, [0,0,0])
             volume_image = np.pad(volume_image, [(b,a) for b,a in zip(before, after)], 
-                    'symmetric')
+                    'reflect')
             label_image = np.pad(label_image, [(b,a) for b,a in zip(before, after)],
-                    'symmetric')
+                    'reflect')
             seed_image = np.pad(seed_image, [(b,a) for b,a in zip(before, after)],
-                    'symmetric')
+                    'constant', constant_values=0)
             start = start + before
+            stop = stop + before
+      
         
+        # crop volumes
         volume_image = volume_image[start[0]:stop[0],start[1]:stop[1],start[2]:stop[2]]
         label_image = label_image[start[0]:stop[0],start[1]:stop[1],start[2]:stop[2]]
         seed_image = seed_image[start[0]:stop[0],start[1]:stop[1],start[2]:stop[2]]
+        label_image = (label_image == subv.label_id).astype(np.uint8)
+        seed_image = ndimage.distance_transform_edt(np.logical_not(seed_image))*(-1.0)
 
         # get elastic transformation
-        current_rotation = np.random.uniform(self.rotation_interval[0], 
-                self.rotation_interval[1])
         self.transformation = augment.create_identity_transformation(volume_image.shape, 
                 subsample = self.subsample)
         if sum(self.jitter_sigma) > 0:
             self.transformation += augment.create_elastic_transformation(
                     volume_image.shape, control_point_spacing = self.control_point_spacing,
                     jitter_sigma = self.jitter_sigma, subsample = self.subsample)
+        current_rotation = np.random.uniform(self.rotation_interval[0], 
+                self.rotation_interval[1])
         if current_rotation != 0:
             self.transformation += augment.create_rotation_transformation(volume_image.shape,
                     angle=current_rotation, subsample=self.subsample)
@@ -830,29 +838,47 @@ class ElasticAugmentGenerator(SubvolumeAugmentGenerator):
         # apply transformation
         volume_image = augment.apply_transformation(volume_image, self.transformation, 
                 interpolate=True)
-        label_image = np.asarray(augment.apply_transformation(label_image, self.transformation,
-                interpolate=False), dtype=bool)
+        label_image = (augment.apply_transformation(label_image, self.transformation,
+                interpolate=False)).astype(bool)
         seed_image = augment.apply_transformation(seed_image, self.transformation, 
                 interpolate=True)
-        seed_image[label_image == 0] = 0
+        seed_image[label_image == False] = np.finfo(seed_image.dtype).min
         seed = np.asarray(np.unravel_index(np.argmax(seed_image), seed_image.shape), 
                 dtype=np.int32)
+        assert label_image[tuple(seed)] == True, 'Seed not in augmented label mask'
         
         # get transformed subvolume 
+        subvol_seed = subv_gen.volume.get_seed_position(subv.image.shape)
+        margin = np.floor_divide(subv.image.shape, 2).astype(np.int32)
+        start = seed - margin
+        stop = seed + margin + np.mod(subv.image.shape, 2).astype(np.int32)
         if CONFIG.model.track_backwards:
             z,y,x = subv.image.shape
-            start = seed - np.array([z - 1, y // 2, x // 2]).astype(np.int32)
-            stop = seed + np.array([1, math.ceil(y / 2.0), 
-                math.ceil(x / 2.0)]).astype(np.int32)
-            subvol_seed = np.array([z - 1, y // 2, x // 2]).astype(np.int32)
-        else:
-            margin = np.floor_divide(subv.image.shape, 2).astype(np.int32)
-            start = seed - margin
-            stop = seed + margin + np.mod(subv.image.shape, 2).astype(np.int32)
-            subvol_seed = np.array(subv.image.shape, dtype=np.int32) // 2
+            if CONFIG.model.seed_position == 'border':
+                start[0] = seed[0] - (z - 1)
+                stop[0] = seed[0] + 1
+            else:
+                start[0] = seed[0] - (z - CONFIG.model.input_fov_shape[0] // 2 - 1)
+                stop[0] = seed[0] + CONFIG.model.input_fov_shape[0] // 2 + 1
         
         subvol_image = volume_image[start[0]:stop[0], start[1]:stop[1], start[2]:stop[2]]
         subvol_label = label_image[start[0]:stop[0], start[1]:stop[1], start[2]:stop[2]]
+
+        # save subvolume as hdffile
+        """
+        hdffile = h5py.File('/groups/kainmueller/home/maisl/output/elastic_transform.hdf', 'a')
+        groupname = datetime.datetime.now().strftime("%I%M%S")
+        shape = subvol_image.shape
+        grp = hdffile.create_group(groupname)
+        grp.create_dataset("raw", shape, data=subv.image*255, dtype=np.uint8, 
+                compression='gzip')
+        grp.create_dataset("mask", shape, data=subv.label_mask.astype(np.uint8), 
+                dtype=np.uint8, compression='gzip')
+        grp.create_dataset("raw_augmented", shape, data=subvol_image*255, dtype=np.uint8, 
+                compression='gzip')
+        grp.create_dataset("mask_augmented", shape, data=subvol_label.astype(np.uint8), 
+                dtype=np.uint8, compression='gzip')
+        """
 
         subv = Subvolume(subvol_image,
                          subvol_label,
@@ -915,6 +941,19 @@ class Volume(object):
                              'This is currently unsupported.'.format(resolution, self.resolution))
         return downsample.astype(np.int64)
 
+    def get_seed_position(self, shape):
+        z,y,x = shape
+        if CONFIG.model.track_backwards:
+            if CONFIG.model.seed_position == 'border':
+                seed = np.array([z - 1, y // 2, x // 2]).astype(np.int32)
+            else:
+                seed = np.array([z - CONFIG.model.input_fov_shape[0] // 2 - 1, 
+                    y // 2, x // 2]).astype(np.int32)
+        else:
+            seed = np.array(shape, dtype=np.int32) // 2
+        return seed
+
+    
     def downsample(self, resolution):
         downsample = self._get_downsample_from_resolution(resolution)
         if np.all(np.equal(downsample, 0)):
@@ -956,11 +995,7 @@ class Volume(object):
 
         seed = bounds.seed
         if seed is None:
-            if CONFIG.model.track_backwards:
-                z,y,x = image_subvol.shape
-                seed = np.array([z-1, y // 2, x // 2]).astype(np.int32)
-            else:
-                seed = np.array(image_subvol.shape, dtype=np.int64) // 2
+            seed = self.get_seed_position(image_subvol.shape)
 
         if self.label_data is not None:
             label_start = bounds.start + bounds.label_margin
@@ -1020,12 +1055,10 @@ class Volume(object):
             self.skip_blank_sections = True
             self.active_axes = np.array(self.shape) != 1
             if CONFIG.model.track_backwards:
-                z,y,x = self.shape
-                self.margin_min = np.array([z - 1, y // 2, x // 2]).astype(np.int32)
-                self.ctr_min = self.margin_min
-                self.margin_max = np.array([1, math.ceil(y / 2.0), 
-                    math.ceil(x / 2.0)]).astype(np.int32) 
-                self.ctr_max = self.volume.shape - self.margin_max - 1
+                self.min_margin = self.get_min_margin()
+                self.ctr_min = self.min_margin
+                self.max_margin = self.get_max_margin()
+                self.ctr_max = (np.array(self.volume.shape) - self.max_margin - 1).astype(np.int32)
             else:
                 self.ctr_min = self.margin
                 self.ctr_max = (np.array(self.volume.shape) - self.margin - 1).astype(np.int32)
@@ -1082,9 +1115,6 @@ class Volume(object):
                         self.seeds = generator(self.volume.image_data)
                     self.seeds = [seed for seed in self.seeds if np.all(seed >= self.ctr_min) 
                             and np.all(seed <= self.ctr_max)]
-                    #if self.volume.seed_gen_mask_data is not None:
-                    #    self.seeds = [seed for seed in self.seeds \
-                    #            if self.volume.seed_gen_mask_data[tuple(seed)] == True]
                     print('len seeds: ', len(self.seeds))
                     if len(self.seeds) == 0:
                         raise ValueError('Cannot generate subvolume seeds for seed generator' +
@@ -1095,6 +1125,31 @@ class Volume(object):
 
         def reset(self):
             self.random.seed(self.prng_seed)
+
+        def get_min_margin(self):
+            if CONFIG.model.track_backwards:
+                z,y,x = self.shape
+                if CONFIG.model.seed_position == 'border':
+                    min_margin = np.array([z - 1, y // 2, x // 2]).astype(np.int32)
+                else:
+                    min_margin = np.array([z - CONFIG.model.input_fov_shape[0] // 2 - 1, 
+                        y // 2, x // 2]).astype(np.int32)
+            else:
+                min_margin = np.floor_divide(self.shape, 2).astype(np.int32)
+            return min_margin
+
+        def get_max_margin(self):
+            if CONFIG.model.track_backwards:
+                z,y,x = self.shape
+                if CONFIG.model.seed_position == 'border':
+                    max_margin = np.array([1, y // 2 + 1, x // 2 + 1]).astype(np.int32) 
+                else:
+                    max_margin = np.array([CONFIG.model.input_fov_shape[0] // 2, 
+                        y // 2, x // 2]).astype(np.int32) 
+            else:
+                max_margin = np.floor_divide(self.shape, 2).astype(np.int32)
+            return max_margin
+
 
         def __next__(self):
             while True:
@@ -1107,8 +1162,8 @@ class Volume(object):
                     ctr = self.seeds[current_seed].astype(np.int32)
                
                 if CONFIG.model.track_backwards:
-                    start = ctr - self.margin_min
-                    stop = ctr + self.margin_max
+                    start = ctr - self.min_margin
+                    stop = ctr + self.max_margin + np.mod(self.shape, 2).astype(np.int32)
                 else:
                     start = ctr - self.margin
                     stop = ctr + self.margin + np.mod(self.shape, 2).astype(np.int32)

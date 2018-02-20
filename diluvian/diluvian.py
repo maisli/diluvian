@@ -151,7 +151,7 @@ def fill_volume_with_model(
             # Flood-fill and get resulting mask.
             # Allow reading outside the image volume bounds to allow segmentation
             # to fill all the way to the boundary.
-            region = Region(image, seed_vox=seed, sparse_mask=True, block_padding='reflect', 
+            region = Region(image, seed_vox=seed, sparse_mask=False, block_padding='reflect', 
                     mask_image=mask_image)
             region.bias_against_merge = bias
             early_termination = False
@@ -189,7 +189,7 @@ def fill_volume_with_model(
     if filter_seeds_by_mask and volume.mask_data is not None:
         seeds = [s for s in seeds if volume.mask_data[tuple(volume.world_coord_to_local(s))]]
     seeds.sort(key=lambda x: x[0], reverse=True)
-    #seeds = seeds[0:30]
+    #seeds = seeds[10:40]
     
     #idx = np.random.choice(len(seeds),15, replace=True)
     #seeds = list(np.asarray(seeds)[idx,:])
@@ -338,11 +338,9 @@ def fill_volume_with_model(
                 seed_queue.get_nowait()
             break
 
-        if checkpoint_filename is not None and label_id - last_checkpoint_label > checkpoint_label_interval:
-            """if np.max(prediction) <= 255:
-                current_type = np.uint8
-            else:
-                current_type = np.uint32"""
+        if checkpoint_filename is not None \
+                and label_id - last_checkpoint_label > checkpoint_label_interval:
+            
             current_type = np.uint64
             config = HDF5Volume.write_file(
                     checkpoint_filename + '.hdf5',
