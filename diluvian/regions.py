@@ -390,6 +390,8 @@ class Region(object):
             priority /= proximity
         elif CONFIG.model.move_priority == 'random':
             priority = np.random.rand()
+        elif CONFIG.model.move_priority == 'z':
+            priority = -pos[0]
         else:  # descending
             priority = -value
 
