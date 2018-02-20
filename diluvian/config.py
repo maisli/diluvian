@@ -400,6 +400,8 @@ class Config(object):
 
         self.random_seed = int(settings.get('random_seed', 0))
 
+        self.make_mask_movie = False
+
     def __str__(self):
         sanitized = {}
         for n, c in six.iteritems(self.__dict__):

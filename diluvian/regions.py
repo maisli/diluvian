@@ -23,6 +23,8 @@ from .util import (
         )
 import pdb
 
+from scipy import misc
+
 class Region(object):
     """A region (single seeded body) for flood filling.
 
@@ -174,6 +176,14 @@ class Region(object):
             hard_mask = self.mask.map_copy(np.bool, threshold, threshold)
         else:
             hard_mask = threshold(self.mask)
+            if CONFIG.make_mask_movie:
+                mip = np.nanmax(hard_mask, 2)
+                print(np.nanmax(mip))
+                print(mip.shape, mip.dtype)
+                mip = np.floor(mip*255)
+                mip = mip.astype('uint8')
+                misc.imsave('hard_mask' + '.tif', mip)
+            
 
         return Body(hard_mask, self.pos_to_vox(self.seed_pos))
 
@@ -545,7 +555,20 @@ class Region(object):
 
         if progress:
             pbar = tqdm(desc='Move queue', position=progress)
+        i=100
         while not self.queue.empty():
+            
+            
+            if CONFIG.make_mask_movie:
+                mip = np.nanmax(self.mask, 2)
+                print(np.nanmax(mip))
+                print(mip.shape, mip.dtype)
+                mip = np.floor(mip*255)
+                mip = mip.astype('uint8')
+                misc.imsave('step_' + str(i) + '.tif', mip)
+                i += 1
+            
+            
             batch_block_data = [self.get_next_block() for _ in
                                 itertools.takewhile(lambda _: not self.queue.empty(), range(move_batch_size))]
             batch_block_data = [b for b in batch_block_data if b is not None]

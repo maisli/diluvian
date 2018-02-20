@@ -127,6 +127,9 @@ def _make_main_parser():
             '--remask-interval', dest='remask_interval', default=None, type=int,
             help='Interval in moves to reset filling region mask based on '
                  'the seeded connected component.')
+    fill_common_parser.add_argument(
+            '--make-mask-movie', action='store_true', dest='make_mask_movie', default=False,
+            help='Write screenshot of mask mip after every fill step.')
 
     fill_parser = commandparsers.add_parser(
             'fill', parents=[common_parser, fill_common_parser],
@@ -313,6 +316,9 @@ def main():
         total_t0 = datetime.now()
         init_seeds()
         from .diluvian import fill_volumes_with_model
+
+        if args.make_mask_movie:
+            CONFIG.make_mask_movie = args.make_mask_movie
 
         load_membrane = True if args.seed_generator == 'membrane' else False
         volumes = load_volumes(args.volume_files, args.in_memory, \
