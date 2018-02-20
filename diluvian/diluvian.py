@@ -151,7 +151,7 @@ def fill_volume_with_model(
             # Flood-fill and get resulting mask.
             # Allow reading outside the image volume bounds to allow segmentation
             # to fill all the way to the boundary.
-            region = Region(image, seed_vox=seed, sparse_mask=False, block_padding='reflect', 
+            region = Region(image, seed_vox=seed, sparse_mask=CONFIG.make_mask_movie, block_padding='reflect', 
                     mask_image=mask_image)
             region.bias_against_merge = bias
             early_termination = False
