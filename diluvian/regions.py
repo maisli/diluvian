@@ -23,6 +23,8 @@ from .util import (
         )
 #import pdb
 
+from scipy import misc
+
 class Region(object):
     """A region (single seeded body) for flood filling.
 
@@ -174,6 +176,14 @@ class Region(object):
             hard_mask = self.mask.map_copy(np.bool, threshold, threshold)
         else:
             hard_mask = threshold(self.mask)
+            if CONFIG.make_mask_movie:
+                mip = np.nanmax(hard_mask, 2)
+                print(np.nanmax(mip))
+                print(mip.shape, mip.dtype)
+                mip = np.floor(mip*255)
+                mip = mip.astype('uint8')
+                misc.imsave('hard_mask' + '.tif', mip)
+            
 
         return Body(hard_mask, self.pos_to_vox(self.seed_pos))
 
@@ -336,14 +346,9 @@ class Region(object):
                                  mask_min[1]:mask_max[1],
                                  mask_min[2]:mask_max[2]]
 
-        #bias_against_revocation = True
-        #self.bias_against_merge = False
         if self.bias_against_merge:
             update_mask = np.isnan(current_mask) | (current_mask > 0.5) | np.less(mask_block, current_mask)
             current_mask[update_mask] = mask_block[update_mask]
-        #elif bias_against_revocation:
-        #    update_mask = np.isnan(current_mask) | (current_mask < CONFIG.model.t_final)
-        #    current_mask[update_mask] = mask_block[update_mask]
         else:
             current_mask[:] = mask_block
 
@@ -385,6 +390,8 @@ class Region(object):
             priority /= proximity
         elif CONFIG.model.move_priority == 'random':
             priority = np.random.rand()
+        elif CONFIG.model.move_priority == 'z':
+            priority = -pos[0]
         else:  # descending
             priority = -value
 
@@ -550,7 +557,20 @@ class Region(object):
 
         if progress:
             pbar = tqdm(desc='Move queue', position=progress)
+        i=100
         while not self.queue.empty():
+            
+            
+            if CONFIG.make_mask_movie:
+                mip = np.nanmax(self.mask, 2)
+                print(np.nanmax(mip))
+                print(mip.shape, mip.dtype)
+                mip = np.floor(mip*255)
+                mip = mip.astype('uint8')
+                misc.imsave('step_' + str(i) + '.tif', mip)
+                i += 1
+            
+            
             batch_block_data = [self.get_next_block() for _ in
                                 itertools.takewhile(lambda _: not self.queue.empty(), range(move_batch_size))]
             batch_block_data = [b for b in batch_block_data if b is not None]

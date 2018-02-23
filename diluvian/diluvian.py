@@ -34,7 +34,6 @@ from .volumes import (
         SubvolumeBounds,
         )
 from .regions import Region
-#import pdb
 
 def generate_subvolume_bounds(filename, volumes, num_bounds, sparse=False, moves=None):
     if '{volume}' not in filename:
@@ -154,7 +153,7 @@ def fill_volume_with_model(
             # Flood-fill and get resulting mask.
             # Allow reading outside the image volume bounds to allow segmentation
             # to fill all the way to the boundary.
-            region = Region(image, seed_vox=seed, sparse_mask=False, block_padding='reflect', 
+            region = Region(image, seed_vox=seed, sparse_mask=not CONFIG.make_mask_movie, block_padding='reflect', 
                     mask_image=mask_image)
             region.bias_against_merge = bias
             early_termination = False
@@ -178,7 +177,7 @@ def fill_volume_with_model(
 
             results.put((seed, body))
 
-    # Generate seeds from volume.
+    # Generate  from volume.
     if subvolume.gt_seeds is not None:
         seeds = np.transpose(np.nonzero(subvolume.gt_seeds))
     else:
@@ -198,6 +197,10 @@ def fill_volume_with_model(
     if filter_seeds_by_mask and volume.mask_data is not None:
         seeds = [s for s in seeds if volume.mask_data[tuple(volume.world_coord_to_local(s))]]
     seeds.sort(key=lambda x: x[0], reverse=True)
+    seeds = seeds[12:13]
+    
+    #idx = np.random.choice(len(seeds),15, replace=True)
+    #seeds = list(np.asarray(seeds)[idx,:])
 
     pbar = tqdm(desc='Seed queue', total=len(seeds), miniters=1, smoothing=0.0)
     label_pbar = tqdm(desc='Labeled vox', total=prediction.size, miniters=1, smoothing=0.0, position=1)

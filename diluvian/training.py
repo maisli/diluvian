@@ -713,10 +713,20 @@ def train_network(
     if tensorboard:
         callbacks.append(TensorBoard())
 
+    if CONFIG.training.num_epochs_without_validation > 0:
+        history = ffn.fit_generator(
+                Roundrobin(*training.data, weights=training.weights, name='training outer'),
+                steps_per_epoch=training.steps_per_epoch,
+                epochs=CONFIG.training.num_epochs_without_validation ,
+                max_queue_size=len(training.gens) - 1,
+                workers=1)
+        
+        write_keras_history_to_csv(history, model_output_filebase + '_noValidation.csv')
+
     history = ffn.fit_generator(
             Roundrobin(*training.data, weights=training.weights, name='training outer'),
             steps_per_epoch=training.steps_per_epoch,
-            epochs=CONFIG.training.total_epochs,
+            epochs=CONFIG.training.total_epochs - CONFIG.training.num_epochs_without_validation,
             max_queue_size=len(training.gens) - 1,
             workers=1,
             callbacks=callbacks,

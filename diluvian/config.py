@@ -91,7 +91,7 @@ class ModelConfig(BaseConfig):
     def __init__(self, settings):
         self.input_fov_shape = np.array(settings.get('input_fov_shape', [17, 33, 33]))
         self.output_fov_shape = np.array(settings.get('output_fov_shape', [17, 33, 33]))
-        self.output_fov_move_fraction = int(settings.get('output_fov_move_fraction', 4))
+        self.output_fov_move_fraction = np.array(settings.get('output_fov_move_fraction', [4, 4, 4]))
         self.v_true = float(settings.get('v_true', 0.95))
         self.v_false = float(settings.get('v_false', 0.05))
         self.t_move = float(settings.get('t_move', 0.9))
@@ -245,6 +245,8 @@ class TrainingConfig(BaseConfig):
         Number of samples to use for validation **from each volume**.
     total_epochs : int
         Maximum number of training epochs.
+    num_epochs_without_validation : int
+        Number of training epochs to run without validation, for speed-up.
     reset_generators : bool
         Reset training generators after each epoch, so that the training
         examples at each epoch are identical.
@@ -323,6 +325,7 @@ class TrainingConfig(BaseConfig):
         self.training_size = int(settings.get('training_size', 256))
         self.validation_size = int(settings.get('validation_size', 256))
         self.total_epochs = int(settings.get('total_epochs', 100))
+        self.num_epochs_without_validation = int(settings.get('num_epochs_without_validation', 30))
         self.reset_generators = bool(settings.get('reset_generators', False))
         self.fill_factor_bins = settings.get('fill_factor_bins', None)
         if self.fill_factor_bins is not None:
@@ -401,6 +404,8 @@ class Config(object):
         self.postprocessing = PostprocessingConfig(settings.get('postprocessing', {}))
 
         self.random_seed = int(settings.get('random_seed', 0))
+
+        self.make_mask_movie = False
 
     def __str__(self):
         sanitized = {}
