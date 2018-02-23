@@ -107,6 +107,9 @@ def _make_main_parser():
             '--random-generator-state', action='store_true', dest='random_generator_state', 
             default=False,
             help='Each generator will be initialized differently, because images of one video do not differ that much.')
+    train_parser.add_argument(
+            '--sigma', dest='sigma', default=0, type=int,
+            help='Standard deviation for Gaussian kernel. Same sigma will be applied for all axes.')
 
 
     fill_common_parser = argparse.ArgumentParser(add_help=False)
@@ -176,6 +179,9 @@ def _make_main_parser():
                  'extension. Should contain "{volume}", which will be '
                  'substituted with the volume name for each respective '
                  'volume\'s bounds.')
+    fill_parser.add_argument(
+            '--sigma', dest='sigma', default=0, type=int,
+            help='Standard deviation for Gaussian kernel. Same sigma will be applied for all axes.')
 
     bounds_common_parser = argparse.ArgumentParser(add_help=False)
     bounds_common_parser.add_argument(
@@ -290,7 +296,8 @@ def main():
                               seed_generator=args.seed_generator,
                               random_generator_state=args.random_generator_state,
                               seeds_from_gt=args.seeds_from_gt,
-                              assigned_gpus=args.assigned_gpus)
+                              assigned_gpus=args.assigned_gpus,
+                              sigma=args.sigma)
             except EarlyAbortException as inst:
                 if args.early_restart:
                     import numpy as np
@@ -334,7 +341,8 @@ def main():
                                 remask_interval=args.remask_interval,
                                 shuffle_seeds=args.shuffle_seeds,
                                 copy_gt_seeds=args.load_seeds,
-                                assigned_gpus=args.assigned_gpus)
+                                assigned_gpus=args.assigned_gpus, 
+                                sigma=args.sigma)
         print('Total time elapsed (hh:mm:ss.ms) {}'.format(datetime.now() - total_t0))
 
 

@@ -34,7 +34,7 @@ from .volumes import (
         SubvolumeBounds,
         )
 from .regions import Region
-import pdb
+#import pdb
 
 def generate_subvolume_bounds(filename, volumes, num_bounds, sparse=False, moves=None):
     if '{volume}' not in filename:
@@ -77,10 +77,12 @@ def fill_volume_with_model(
         remask_interval=None,
         shuffle_seeds=True,
         copy_gt_seeds=False,
-        assigned_gpus=False):
+        assigned_gpus=False,
+        sigma=0):
 
-    if CONFIG.training.num_gpus > len(assigned_gpus):
-        num_workers = len(assigned_gpus)
+    if assigned_gpus is not None:
+        if CONFIG.training.num_gpus > len(assigned_gpus):
+            num_workers = len(assigned_gpus)
   
     subvolume = volume.get_subvolume(SubvolumeBounds(start=np.zeros(3, dtype=np.int64), 
         stop=volume.shape), copy_gt_seeds)
@@ -98,6 +100,7 @@ def fill_volume_with_model(
     # bodies overlap. For now the first body takes precedence in the
     # predicted labels.
     conflict_count = np.full_like(prediction, 0, dtype=np.uint32)
+    lineage = np.full_like(subvolume.image, background_label_id, dtype=np.uint64)
 
     def worker(worker_id, set_devices, model_file, image, seeds, results, lock, revoked, mask_image):
         lock.acquire()
@@ -184,15 +187,17 @@ def fill_volume_with_model(
             seeds = generator(subvolume.label_image, 15)
         elif seed_generator == 'sobel':
             seeds = generator(subvolume.image, CONFIG.volume.resolution)
+        elif seed_generator == 'local_minima':
+            if subvolume.mask_image is not None:
+                seeds = generator(subvolume.image, subvolume.mask_image, sigma=sigma)
+            else:
+                seeds = generator(subvolume.image, sigma=sigma)
         else:
             seeds = generator(subvolume.image)
+    
     if filter_seeds_by_mask and volume.mask_data is not None:
         seeds = [s for s in seeds if volume.mask_data[tuple(volume.world_coord_to_local(s))]]
     seeds.sort(key=lambda x: x[0], reverse=True)
-    #seeds = seeds[10:40]
-    
-    #idx = np.random.choice(len(seeds),15, replace=True)
-    #seeds = list(np.asarray(seeds)[idx,:])
 
     pbar = tqdm(desc='Seed queue', total=len(seeds), miniters=1, smoothing=0.0)
     label_pbar = tqdm(desc='Labeled vox', total=prediction.size, miniters=1, smoothing=0.0, position=1)
@@ -324,6 +329,33 @@ def fill_volume_with_model(
                 loading_lock.release()
 
         conflict_count[bounds_shape][np.logical_and(np.logical_not(prediction_mask), mask)] += 1
+        # merge overlapping regions / cell split detection
+        overlap = lineage[bounds_shape][mask.astype(bool)]
+        unique, counts = np.unique(overlap[overlap != background_label_id], return_counts=True)
+        if len(unique) > 0:
+            merge_label = None
+            counts, unique = zip(*sorted(zip(counts, unique)))
+            for label in unique:
+                if merge_label is None:
+                    jaccard = np.sum(np.logical_and(mask, prediction==label), 
+                            axis=(1,2)).astype(np.float32) / np.sum(np.logical_or(mask, 
+                                prediction==label), axis=(1,2))
+                    min_frames = CONFIG.model.num_overlapping_frames
+                    for i in range(len(jaccard) - min_frames - 1):  
+                        if np.sum(jaccard[i:i+min_frames] > CONFIG.model.t_merge) > int(0.75 * min_frames):
+                            merge_label = label
+                            break
+                else:
+                    print('Body overlaps with more than one other region!')
+                break
+                
+            if merge_label is not None:
+                lineage[bounds_shape][np.logical_and(lineage == background_label_id, mask)] = merge_label 
+            else:
+                lineage[bounds_shape][np.logical_and(prediction_mask, mask)] = label_id
+
+        else:
+            lineage[bounds_shape][np.logical_and(prediction_mask, mask)] = label_id
         label_shape = np.logical_and(prediction_mask, mask)
         prediction[bounds_shape][np.logical_and(prediction_mask, mask)] = label_id
 
@@ -345,7 +377,8 @@ def fill_volume_with_model(
             config = HDF5Volume.write_file(
                     checkpoint_filename + '.hdf5',
                     CONFIG.volume.resolution,
-                    label_data=prediction.astype(current_type))
+                    label_data=prediction.astype(current_type),
+                    lineage_data=lineage.astype(current_type))
             config['name'] = 'segmentation checkpoint'
             with open(checkpoint_filename + '.toml', 'wb') as tomlfile:
                 tomlfile.write('# Filling model: {}\n'.format(model_file))
@@ -360,7 +393,7 @@ def fill_volume_with_model(
     label_pbar.close()
     pbar.close()
 
-    return prediction, conflict_count
+    return prediction, conflict_count, lineage
 
 
 def fill_volumes_with_model(
@@ -391,23 +424,20 @@ def fill_volumes_with_model(
 
         volume_filename = filename.format(volume=volume_name)
         checkpoint_filename = volume_filename + '_checkpoint'
-        prediction, conflict_count = fill_volume_with_model(
+        prediction, conflict_count, lineage = fill_volume_with_model(
                 model_file,
                 volume,
                 resume_prediction=resume_prediction,
                 checkpoint_filename=checkpoint_filename,
                 **kwargs)
 
-        """if np.max(prediction) <= 255:
-            current_type = np.uint8
-        else:
-            current_type = np.int32"""
         current_type = np.uint64
 
         config = HDF5Volume.write_file(
                 volume_filename + '.hdf5',
                 CONFIG.volume.resolution,
-                label_data=prediction.astype(current_type))
+                label_data=prediction.astype(current_type),
+                lineage_data=lineage.astype(current_type))
         config['name'] = volume_name + ' segmentation'
         with open(volume_filename + '.toml', 'wb') as tomlfile:
             tomlfile.write('# Filling model: {}\n'.format(model_file))

@@ -18,7 +18,6 @@ from .util import (
         get_color_shader,
         WrappedViewer,
 )
-import pdb
 
 
 def make_prewitt(size):
@@ -246,7 +245,7 @@ def few_membrane_seeds(image_data):
 
 
 
-def local_minima_seeds(image_data, mask_data=None):
+def local_minima_seeds(image_data, mask_data=None, sigma=0):
     """Create seed locations which are local minimas of the original image.
 
 
@@ -259,20 +258,48 @@ def local_minima_seeds(image_data, mask_data=None):
     list of ndarray
     """
     from skimage.feature import peak_local_max
-
     seeds = []
     if image_data.dtype == np.bool: 
         return distance_transform_seeds(image_data)
     else:
-        #skmax = extrema.local_minima(image_data)
-        #seeds = np.transpose(np.nonzero(skmax))
         max_val = 1 if image_data.dtype == np.float else 255
         image = max_val - image_data
-        if mask_data is not None:
-            seeds = peak_local_max(image, labels=mask_data, exclude_border=0, min_distance=2)
+        z = image_data.shape[0]
+        if sigma > 0:
+            min_distance = 1
         else:
-            seeds = peak_local_max(image, exclude_border=0, min_distance=2)
-        return seeds
+            min_distance = 2
+
+        if z > 1:
+            if sigma > 0:
+                last_frame = ndimage.gaussian_filter(image[z-1,:,:], sigma=1)
+                rest = ndimage.gaussian_filter(image[0:z-1,:,:], sigma=1)
+            else:
+                last_frame = image[z-1,:,:]
+                rest = image[0:z-1,:,:]
+            if mask_data is not None:
+                starting_seeds = peak_local_max(last_frame, labels=mask_data[z-1,:,:], 
+                        min_distance=min_distance)
+                seeds = peak_local_max(rest, labels=mask_data[0:z-1,:,:], exclude_border=0, 
+                        min_distance=min_distance)
+            else:
+                starting_seeds = peak_local_max(last_frame, min_distance=min_distance)
+                seeds = peak_local_max(image[0:-2,:,:], exclude_border=0, 
+                        min_distance=min_distance)
+            
+            starting_seeds = np.concatenate((np.zeros((len(starting_seeds),1), 
+                dtype=starting_seeds.dtype) + (z - 1), starting_seeds), axis=1)
+            seeds = np.concatenate((starting_seeds, seeds), axis=0)
+        else:
+            if sigma > 0:
+                image = ndimage.gaussian_filter(image, sigma=1)
+            if mask_data is not None:
+                seeds = peak_local_max(image, labels=mask_data, min_distance=min_distance,
+                        exclude_border=0)
+            else:
+                seeds = peak_local_max(image, min_distance=min_distance, exclude_border=0)
+        
+    return seeds
 
 
 def neuron_seeds(image_data, seed_num):

@@ -21,7 +21,7 @@ from .util import (
         pad_dims,
         WrappedViewer,
         )
-import pdb
+#import pdb
 
 class Region(object):
     """A region (single seeded body) for flood filling.
@@ -149,7 +149,7 @@ class Region(object):
         if self.target is not None:
             self.target_offset = (self.bounds - self.target.shape) // 2
             assert np.isclose(self.target[tuple(self.seed_vox - self.target_offset)], 
-                    CONFIG.model.v_true), 'Seed position should be in target body.'
+                    CONFIG.model.v_true), 'Seed position (%s, %s) should be in target body.' % (self.seed_pos, self.seed_pos)
         self.mask[tuple(self.seed_vox)] = CONFIG.model.v_true
         self.visited.add(tuple(self.seed_pos))
 
@@ -336,9 +336,14 @@ class Region(object):
                                  mask_min[1]:mask_max[1],
                                  mask_min[2]:mask_max[2]]
 
+        #bias_against_revocation = True
+        #self.bias_against_merge = False
         if self.bias_against_merge:
             update_mask = np.isnan(current_mask) | (current_mask > 0.5) | np.less(mask_block, current_mask)
             current_mask[update_mask] = mask_block[update_mask]
+        #elif bias_against_revocation:
+        #    update_mask = np.isnan(current_mask) | (current_mask < CONFIG.model.t_final)
+        #    current_mask[update_mask] = mask_block[update_mask]
         else:
             current_mask[:] = mask_block
 

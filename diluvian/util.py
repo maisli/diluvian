@@ -15,7 +15,7 @@ import neuroglancer
 import numpy as np
 import six
 from six.moves import input as raw_input
-import pdb
+#import pdb
 
 class WrappedViewer(neuroglancer.Viewer):
     def __init__(self, voxel_coordinates=None, **kwargs):

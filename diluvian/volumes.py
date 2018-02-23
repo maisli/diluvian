@@ -27,8 +27,8 @@ from . import preprocessing
 import augment
 import random
 from .coordinate import Coordinate
-import pdb
-import datetime
+#import pdb
+#import datetime
 
 DimOrder = namedtuple('DimOrder', ('X', 'Y', 'Z'))
 
@@ -864,22 +864,6 @@ class ElasticAugmentGenerator(SubvolumeAugmentGenerator):
         subvol_image = volume_image[start[0]:stop[0], start[1]:stop[1], start[2]:stop[2]]
         subvol_label = label_image[start[0]:stop[0], start[1]:stop[1], start[2]:stop[2]]
 
-        # save subvolume as hdffile
-        """
-        hdffile = h5py.File('/groups/kainmueller/home/maisl/output/elastic_transform.hdf', 'a')
-        groupname = datetime.datetime.now().strftime("%I%M%S")
-        shape = subvol_image.shape
-        grp = hdffile.create_group(groupname)
-        grp.create_dataset("raw", shape, data=subv.image*255, dtype=np.uint8, 
-                compression='gzip')
-        grp.create_dataset("mask", shape, data=subv.label_mask.astype(np.uint8), 
-                dtype=np.uint8, compression='gzip')
-        grp.create_dataset("raw_augmented", shape, data=subvol_image*255, dtype=np.uint8, 
-                compression='gzip')
-        grp.create_dataset("mask_augmented", shape, data=subvol_label.astype(np.uint8), 
-                dtype=np.uint8, compression='gzip')
-        """
-
         subv = Subvolume(subvol_image,
                          subvol_label,
                          subvol_seed,
@@ -969,9 +953,9 @@ class Volume(object):
         return SparseWrappedVolume(self, *args)
 
     def subvolume_bounds_generator(self, shape=None, label_margin=None, seed_generator=None, 
-            prng_seed=None, seeds_from_gt=False):
+            prng_seed=None, seeds_from_gt=False, sigma=0):
         return self.SubvolumeBoundsGenerator(self, shape, label_margin, seed_generator, 
-                prng_seed, seeds_from_gt)
+                prng_seed, seeds_from_gt, sigma)
 
     def subvolume_generator(self, bounds_generator=None, **kwargs):
         if bounds_generator is None:
@@ -1044,7 +1028,7 @@ class Volume(object):
 
     class SubvolumeBoundsGenerator(six.Iterator):
         def __init__(self, volume, shape, label_margin=None, seed_generator=None, 
-                prng_seed=None, seeds_from_gt=False):
+                prng_seed=None, seeds_from_gt=False, sigma=0):
 
             self.volume = volume
             self.shape = shape
@@ -1108,14 +1092,16 @@ class Volume(object):
                         self.seeds = generator(self.volume.label_data > 0)
                     elif seed_generator == 'neuron':
                         self.seeds = generator(self.volume.label_data, 30000)
-                    elif self.volume.seed_gen_mask_data is not None:
-                        self.seeds = generator(self.volume.image_data, 
-                                self.volume.seed_gen_mask_data)
+                    elif seed_generator == 'local_minima':
+                        if self.volume.seed_gen_mask_data is not None:
+                            self.seeds = generator(self.volume.image_data, 
+                                    self.volume.seed_gen_mask_data, sigma=sigma)
+                        else:
+                            self.seeds = generator(self.volume.image_data, sigma=sigma)
                     else:
                         self.seeds = generator(self.volume.image_data)
                     self.seeds = [seed for seed in self.seeds if np.all(seed >= self.ctr_min) 
                             and np.all(seed <= self.ctr_max)]
-                    print('len seeds: ', len(self.seeds))
                     if len(self.seeds) == 0:
                         raise ValueError('Cannot generate subvolume seeds for seed generator' +
                                 '({})'.format(self.seed_generator))
@@ -1476,11 +1462,12 @@ class HDF5Volume(Volume):
     def write_file(filename, resolution, **kwargs):
         h5file = h5py.File(filename, 'w')
         config = {'hdf5_file': os.path.basename(filename)}
-        channels = ['image', 'label', 'mask']
+        channels = ['image', 'label', 'mask', 'lineage']
         default_datasets = {
             'image': 'volumes/raw',
             'label': 'volumes/labels/neuron_ids',
             'mask': 'volumes/labels/mask',
+            'lineage': 'volumes/labels/lineage'
         }
         for channel in channels:
             data = kwargs.get('{}_data'.format(channel), None)

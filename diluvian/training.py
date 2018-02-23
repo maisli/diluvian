@@ -59,7 +59,7 @@ from .volumes import (
 from .regions import (
         Region,
         )
-import pdb
+#import pdb
 
 
 def plot_history(history):
@@ -467,7 +467,7 @@ def get_output_margin(model_config):
 
 
 def build_validation_gen(validation_volumes, seed_generator=None, 
-        prng_seed_generator=None, seeds_from_gt=False):
+        prng_seed_generator=None, seeds_from_gt=False, sigma=0):
     output_margin = get_output_margin(CONFIG.model)
 
     # If there is only one volume, duplicate since more than one is needed
@@ -483,7 +483,8 @@ def build_validation_gen(validation_volumes, seed_generator=None,
                                           seed_generator=seed_generator,
                                           prng_seed=prng_seed_generator.randint(0,10000) 
                                           if prng_seed_generator is not None else None,
-                                          seeds_from_gt=seeds_from_gt))
+                                          seeds_from_gt=seeds_from_gt,
+                                          sigma=sigma))
             for v in six.itervalues(validation_volumes)]
     
     if CONFIG.training.augment_validation:
@@ -532,7 +533,7 @@ def build_validation_gen(validation_volumes, seed_generator=None,
 
 
 def build_training_gen(training_volumes, seed_generator=None, 
-        prng_seed_generator=None, seeds_from_gt=False):
+        prng_seed_generator=None, seeds_from_gt=False, sigma=0):
     output_margin = get_output_margin(CONFIG.model)
 
     # If there is only one volume, duplicate since more than one is needed
@@ -551,7 +552,8 @@ def build_training_gen(training_volumes, seed_generator=None,
                                                   seed_generator=seed_generator,
                                                   prng_seed=prng_seed_generator.randint(0,10000) 
                                                   if prng_seed_generator is not None else None,
-                                                  seeds_from_gt=seeds_from_gt)))
+                                                  seeds_from_gt=seeds_from_gt,
+                                                  sigma=sigma)))
             for v in six.itervalues(training_volumes)]
     random.shuffle(training_gens)
 
@@ -609,7 +611,8 @@ def train_network(
         seed_generator=None,
         random_generator_state=False,
         seeds_from_gt=False,
-        assigned_gpus=None):
+        assigned_gpus=None,
+        sigma=0):
     
     random.seed(CONFIG.random_seed)
     import os
@@ -655,7 +658,6 @@ def train_network(
     #check training_volumes if mask and label data have some overlap
     remove_volumes = []
     for k, v in six.iteritems(training_volumes):
-        #print(k, np.max(v.label_data))
         if v.seed_gen_mask_data is not None:
             if np.sum(np.logical_and(v.label_data > 0, v.seed_gen_mask_data)) <= 200:
                 remove_volumes.append(k)
@@ -664,7 +666,6 @@ def train_network(
             del training_volumes[remove_volume]
     remove_volumes = []
     for k, v in six.iteritems(validation_volumes):
-        #print(k, np.max(v.label_data))
         if v.seed_gen_mask_data is not None:
             if np.sum(np.logical_and(v.label_data > 0, v.seed_gen_mask_data)) <= 200:
                 remove_volumes.append(k)
@@ -682,9 +683,9 @@ def train_network(
         prng_seed_generator = np.random.RandomState(0)
 
     validation = build_validation_gen(validation_volumes, seed_generator, 
-            prng_seed_generator, seeds_from_gt)
+            prng_seed_generator, seeds_from_gt, sigma)
     training = build_training_gen(training_volumes, seed_generator, 
-            prng_seed_generator, seeds_from_gt)
+            prng_seed_generator, seeds_from_gt, sigma)
 
     callbacks = []
     callbacks.extend(validation.callbacks)
