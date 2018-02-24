@@ -153,7 +153,11 @@ def fill_volume_with_model(
             # Flood-fill and get resulting mask.
             # Allow reading outside the image volume bounds to allow segmentation
             # to fill all the way to the boundary.
-            region = Region(image, seed_vox=seed, sparse_mask=not CONFIG.make_mask_movie, block_padding='reflect', 
+            if CONFIG.make_mask_movie or CONFIG.export_lineages:
+                sparse_mask = False
+            else:
+                sparse_mask = True
+            region = Region(image, seed_vox=seed, sparse_mask=sparse_mask, block_padding='reflect', 
                     mask_image=mask_image)
             region.bias_against_merge = bias
             early_termination = False
@@ -197,7 +201,8 @@ def fill_volume_with_model(
     if filter_seeds_by_mask and volume.mask_data is not None:
         seeds = [s for s in seeds if volume.mask_data[tuple(volume.world_coord_to_local(s))]]
     seeds.sort(key=lambda x: x[0], reverse=True)
-    seeds = seeds[12:13]
+    #seeds = seeds[50:51]
+    #seeds = [np.array([179, 418, 599], dtype=np.int64), np.array([179, 412, 609], dtype=np.int64)    ,np.array([179,439, 536], dtype=np.int64), np.array([179,449,541], dtype=np.int64)]
     
     #idx = np.random.choice(len(seeds),15, replace=True)
     #seeds = list(np.asarray(seeds)[idx,:])

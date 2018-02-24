@@ -13,7 +13,6 @@ import os
 import numpy as np
 import pytoml as toml
 import six
-import pdb
 
 class BaseConfig(object):
     """Base class for configuration objects.
@@ -361,6 +360,7 @@ class TrainingConfig(BaseConfig):
                 [{'scale_min': 0.9, 'scale_max': 1.1, 'shift_min': -0.1, 'shift_max': 0.1,
                   'z_section_wise': False}])
         self.augment_elastic = settings.get('augment_elastic', [])
+        self.augment_zoom = settings.get('augment_zoom', [])
 
 
 class PostprocessingConfig(BaseConfig):
@@ -406,6 +406,7 @@ class Config(object):
         self.random_seed = int(settings.get('random_seed', 0))
 
         self.make_mask_movie = False
+        self.export_lineages = bool(settings.get('export_lineages', True))
 
     def __str__(self):
         sanitized = {}

@@ -27,8 +27,6 @@ from . import preprocessing
 import augment
 import random
 from .coordinate import Coordinate
-#import pdb
-#import datetime
 
 DimOrder = namedtuple('DimOrder', ('X', 'Y', 'Z'))
 
@@ -436,6 +434,46 @@ class PermuteAxesAugmentGenerator(SubvolumeAugmentGenerator):
         return subv
 
 
+class ZoomAugmentGenerator(SubvolumeAugmentGenerator):
+    """Repeats subvolumes from a subvolume generator with rescaled subvolumes.
+
+    For each subvolume in the original generator, this generator will yield two
+    subvolumes: the original subvolume and the subvolume with the image,
+    label mask, and seed axes permuted according to a given axes order.
+
+    Parameters
+    ----------
+    subvolume_generator : SubvolumeGenerator
+    return_both : bool
+        If true, return both the original and augmented volume in sequence.
+        If false, return either with equal probability.
+    zoom : sequence of float
+    """
+    def __init__(self, subvolume_generator, return_both, zoom_interval):
+        super(ZoomAugmentGenerator, self).__init__(subvolume_generator, return_both)
+        self.zoom_interval = zoom_interval
+
+    def augment_subvolume(self):
+        
+        subv = self.subvolume
+        current_zoom = np.random.uniform(self.zoom_interval[0], self.zoom_interval[1])
+        shape = subv.image.shape
+        subvol_image = ndimage.zoom(subv.image, current_zoom, order=0)
+        subvol_mask = ndimage.zoom(subv.label_mask, current_zoom, order=0)
+        start = np.array(subvol_image.shape, dtype=np.int32) // 2 - np.array(shape, dtype=np.int32) // 2
+        stop = start + shape
+        
+        subvol_image = subvol_image[start[0]:stop[0], start[1]:stop[1], start[2]:stop[2]]
+        subvol_mask = subvol_mask[start[0]:stop[0], start[1]:stop[1], start[2]:stop[2]]
+        
+        subv = Subvolume(subvol_image,
+                subvol_mask,
+                subv.seed,
+                subv.label_id)
+
+        return subv
+
+
 class MissingDataAugmentGenerator(SubvolumeAugmentGenerator):
     """Repeats subvolumes from a subvolume generator with missing data planes.
 
@@ -583,6 +621,7 @@ class ContrastAugmentGenerator(SubvolumeAugmentGenerator):
         sections = np.where(rolls < self.probability)
 
         if sections and sections[0].size:
+            
             subv = self.subvolume
             subv = Subvolume(subv.image.copy(),
                              subv.label_mask,
@@ -597,6 +636,7 @@ class ContrastAugmentGenerator(SubvolumeAugmentGenerator):
             center = np.random.normal(self.center_mean, self.center_std)
             data = scaling*(data - old_min) + 0.5*scaling*center*(old_max - old_min) + old_min
             subv.image[slices] = data
+            
             return subv
         else:
             return None

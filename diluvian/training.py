@@ -55,6 +55,7 @@ from .volumes import (
         RelabelSeedComponentGenerator,
         IntensityAugmentGenerator,
         ElasticAugmentGenerator,
+        ZoomAugmentGenerator,
         )
 from .regions import (
         Region,
@@ -270,6 +271,8 @@ def augment_subvolume_generator(subvolume_generator):
     for v in CONFIG.training.augment_intensity:
         gen = IntensityAugmentGenerator(gen, CONFIG.training.augment_use_both, v['scale_min'],
                 v['scale_max'], v['shift_min'], v['shift_max'], v['z_section_wise'])
+    for z in CONFIG.training.augment_zoom:
+        gen = ZoomAugmentGenerator(gen, CONFIG.training.augment_use_both, z)
     gen = ClipSubvolumeImageGenerator(gen)
 
     return gen
