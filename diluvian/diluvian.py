@@ -71,7 +71,7 @@ def fill_volume_with_model(
         num_workers=CONFIG.training.num_gpus,
         worker_prequeue=1,
         filter_seeds_by_mask=True,
-        reject_non_seed_components=True,
+        reject_non_seed_components=False,
         reject_early_termination=False,
         remask_interval=None,
         shuffle_seeds=True,
