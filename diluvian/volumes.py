@@ -28,6 +28,7 @@ import augment
 import random
 from .coordinate import Coordinate
 
+
 DimOrder = namedtuple('DimOrder', ('X', 'Y', 'Z'))
 
 def partition_volumes(volumes, downsample=True):
@@ -457,6 +458,7 @@ class ZoomAugmentGenerator(SubvolumeAugmentGenerator):
         
         subv = self.subvolume
         current_zoom = np.random.uniform(self.zoom_interval[0], self.zoom_interval[1])
+
         shape = subv.image.shape
         subvol_image = ndimage.zoom(subv.image, current_zoom, order=0)
         subvol_mask = ndimage.zoom(subv.label_mask, current_zoom, order=0)

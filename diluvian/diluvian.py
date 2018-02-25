@@ -153,12 +153,8 @@ def fill_volume_with_model(
             # Flood-fill and get resulting mask.
             # Allow reading outside the image volume bounds to allow segmentation
             # to fill all the way to the boundary.
-            if CONFIG.make_mask_movie or CONFIG.export_lineages:
-                sparse_mask = False
-            else:
-                sparse_mask = True
-            region = Region(image, seed_vox=seed, sparse_mask=sparse_mask, block_padding='reflect', 
-                    mask_image=mask_image)
+            region = Region(image, seed_vox=seed, sparse_mask=not CONFIG.make_mask_movie, 
+                    block_padding='reflect', mask_image=mask_image)
             region.bias_against_merge = bias
             early_termination = False
             try:
@@ -201,7 +197,7 @@ def fill_volume_with_model(
     if filter_seeds_by_mask and volume.mask_data is not None:
         seeds = [s for s in seeds if volume.mask_data[tuple(volume.world_coord_to_local(s))]]
     seeds.sort(key=lambda x: x[0], reverse=True)
-    #seeds = seeds[50:51]
+    #seeds = seeds[0:100]
     #seeds = [np.array([179, 418, 599], dtype=np.int64), np.array([179, 412, 609], dtype=np.int64)    ,np.array([179,439, 536], dtype=np.int64), np.array([179,449,541], dtype=np.int64)]
     
     #idx = np.random.choice(len(seeds),15, replace=True)
@@ -337,35 +333,45 @@ def fill_volume_with_model(
                 loading_lock.release()
 
         conflict_count[bounds_shape][np.logical_and(np.logical_not(prediction_mask), mask)] += 1
-        # merge overlapping regions / cell split detection
-        overlap = lineage[bounds_shape][mask.astype(bool)]
-        unique, counts = np.unique(overlap[overlap != background_label_id], return_counts=True)
-        if len(unique) > 0:
-            merge_label = None
-            counts, unique = zip(*sorted(zip(counts, unique)))
-            for label in unique:
-                if merge_label is None:
-                    jaccard = np.sum(np.logical_and(mask, prediction==label), 
-                            axis=(1,2)).astype(np.float32) / np.sum(np.logical_or(mask, 
-                                prediction==label), axis=(1,2))
-                    min_frames = CONFIG.model.num_overlapping_frames
-                    for i in range(len(jaccard) - min_frames - 1):  
-                        if np.sum(jaccard[i:i+min_frames] > CONFIG.model.t_merge) > int(0.75 * min_frames):
-                            merge_label = label
-                            break
-                else:
-                    print('Body overlaps with more than one other region!')
-                break
-                
-            if merge_label is not None:
-                lineage[bounds_shape][np.logical_and(lineage == background_label_id, mask)] = merge_label 
-            else:
-                lineage[bounds_shape][np.logical_and(prediction_mask, mask)] = label_id
-
-        else:
-            lineage[bounds_shape][np.logical_and(prediction_mask, mask)] = label_id
         label_shape = np.logical_and(prediction_mask, mask)
-        prediction[bounds_shape][np.logical_and(prediction_mask, mask)] = label_id
+        prediction[bounds_shape][label_shape] = label_id
+        
+        # merge overlapping regions
+        if CONFIG.export_lineages:
+            overlapping_labels = lineage[bounds_shape][mask.astype(bool)]
+            unique, counts = np.unique(overlapping_labels[overlapping_labels != background_label_id], return_counts=True)
+            merge_label = None
+            if len(unique) > 0:
+                if len(unique) > 1:
+                    logging.debug('Body overlaps with more than one other region! %s, %s', unique, counts)
+                counts, unique = zip(*sorted(zip(counts, unique)))
+                for label in unique:
+                    if merge_label is None:
+                        overlap = np.sum(np.logical_and(mask, lineage[bounds_shape] == label), 
+                                axis=(1,2)).astype(np.float32) / np.sum(mask, axis=(1,2))
+                        min_frames = int(0.75*CONFIG.model.num_overlapping_frames)
+                        overlap = overlap > CONFIG.model.t_merge
+                        
+                        # check overlap of subsequent frames
+                        for i in range(len(overlap) - min_frames):
+                            if np.sum(overlap[i:i+min_frames]) >= min_frames:
+                                merge_label = label
+                                break
+
+                        # check overlap in the first subsequent frames of the video
+                        if merge_label is None and bounds[0][0] < min_frames and \
+                                np.any(overlap[0:min_frames] > 0):
+                            stop = min(bounds[1][0], min_frames)
+                            if np.any(np.cumsum(overlap[0:stop]) == np.array(range(stop)) + 1):
+                                merge_label = label
+                                break
+                    else:
+                        break
+
+            if merge_label is not None:
+                lineage[bounds_shape][label_shape] = merge_label 
+            else:
+                lineage[bounds_shape][label_shape] = label_id
 
         label_pbar.set_description('Label {}'.format(label_id))
         label_pbar.update(np.count_nonzero(label_shape))
