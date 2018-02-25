@@ -1509,7 +1509,7 @@ class HDF5Volume(Volume):
             'image': 'volumes/raw',
             'label': 'volumes/labels/neuron_ids',
             'mask': 'volumes/labels/mask',
-            'lineage': 'volumes/labels/lineage'
+            'lineage': 'volumes/labels/lineages'
         }
         for channel in channels:
             data = kwargs.get('{}_data'.format(channel), None)

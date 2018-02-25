@@ -197,7 +197,7 @@ def fill_volume_with_model(
     if filter_seeds_by_mask and volume.mask_data is not None:
         seeds = [s for s in seeds if volume.mask_data[tuple(volume.world_coord_to_local(s))]]
     seeds.sort(key=lambda x: x[0], reverse=True)
-    #seeds = seeds[0:100]
+    #seeds = seeds[0:200]
     #seeds = [np.array([179, 418, 599], dtype=np.int64), np.array([179, 412, 609], dtype=np.int64)    ,np.array([179,439, 536], dtype=np.int64), np.array([179,449,541], dtype=np.int64)]
     
     #idx = np.random.choice(len(seeds),15, replace=True)
