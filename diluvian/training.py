@@ -502,11 +502,18 @@ def build_validation_gen(validation_volumes, seed_generator=None,
     validation_worker_gens = [g for g in validation_worker_gens if len(g) > 0]
     subv_per_worker = CONFIG.training.validation_size // len(validation_worker_gens)
     logging.debug('# of validation workers: %s', len(validation_worker_gens))
+    
+    if CONFIG.model.weight_volumes:
+        worker_gens_weights = [[subvol_gen.fg_fraction for subvol_gen in worker_gen] 
+                for worker_gen in validation_worker_gens]
+    else:
+        worker_gens_weights = [None]*len(validation_worker_gens)
+
 
     validation_metric = get_function(CONFIG.training.validation_metric['metric'])
     validation_kludges = [{'inputs': None, 'outputs': None} for _ in range(CONFIG.training.num_workers)]
     validation_data = [MovingTrainingGenerator(
-            Roundrobin(*gen, name='validation {}'.format(i)),
+            Roundrobin(*gen, weights=weight, name='validation {}'.format(i)),
             CONFIG.training.batch_size,
             kludge,
             f_a_bins=CONFIG.training.fill_factor_bins,
@@ -515,7 +522,7 @@ def build_validation_gen(validation_volumes, seed_generator=None,
             subv_metric_fn=validation_metric,
             subv_metric_threshold=CONFIG.training.validation_metric['threshold'],
             subv_metric_args=CONFIG.training.validation_metric['args'])
-            for i, (gen, kludge) in enumerate(zip(validation_worker_gens, validation_kludges))]
+            for i, (gen, kludge, weight) in enumerate(zip(validation_worker_gens, validation_kludges, worker_gens_weights))]
 
     callbacks = []
     callbacks.append(GeneratorSubvolumeMetric(validation_data, 'val_subv_metric'))
@@ -526,13 +533,19 @@ def build_validation_gen(validation_volumes, seed_generator=None,
     VALIDATION_STEPS = np.ceil(VALIDATION_STEPS / len(validation_worker_gens)) * len(validation_worker_gens)
     VALIDATION_STEPS = VALIDATION_STEPS * CONFIG.model.validation_subv_moves + len(validation_worker_gens)
     VALIDATION_STEPS = VALIDATION_STEPS.astype(np.int64)
+    
+    if CONFIG.model.weight_volumes:
+        validation_data_weights = [np.sum(worker_gen_weight) 
+                for worker_gen_weight in worker_gens_weights]
+    else:
+        validation_data_weights = None
 
     return DataGenerator(
             data=validation_data,
             gens=validation_worker_gens,
             callbacks=callbacks,
             steps_per_epoch=VALIDATION_STEPS,
-            weights=None)
+            weights=validation_data_weights)
 
 
 def build_training_gen(training_volumes, seed_generator=None, 

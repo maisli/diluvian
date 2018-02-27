@@ -1507,7 +1507,7 @@ class HDF5Volume(Volume):
         channels = ['image', 'label', 'mask', 'lineage']
         default_datasets = {
             'image': 'volumes/raw',
-            'label': 'volumes/labels/neuron_ids',
+            'label': 'volumes/labels/cells',
             'mask': 'volumes/labels/mask',
             'lineage': 'volumes/labels/lineages'
         }
