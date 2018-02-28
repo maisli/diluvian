@@ -10,6 +10,7 @@ import logging
 from multiprocessing import (
         Manager,
         Process,
+        Value
         )
 import os
 import random
@@ -19,6 +20,8 @@ import pytoml as toml
 import six
 from six.moves import input as raw_input
 from tqdm import tqdm
+
+import tifffile
 
 from .config import CONFIG
 from . import preprocessing
@@ -61,7 +64,7 @@ def fill_volume_with_model(
         volume,
         resume_prediction=None,
         checkpoint_filename=None,
-        checkpoint_label_interval=20,
+        checkpoint_label_interval=50,
         seed_generator='sobel',
         background_label_id=0,
         bias=True,
@@ -71,13 +74,16 @@ def fill_volume_with_model(
         num_workers=CONFIG.training.num_gpus,
         worker_prequeue=1,
         filter_seeds_by_mask=True,
-        reject_non_seed_components=False,
+        reject_non_seed_components=True,
         reject_early_termination=False,
         remask_interval=None,
         shuffle_seeds=True,
         copy_gt_seeds=False,
         assigned_gpus=False,
         sigma=0):
+
+    manager = Manager() 
+    label_id = manager.Value('i',0)
 
     if assigned_gpus is not None:
         if CONFIG.training.num_gpus > len(assigned_gpus):
@@ -88,20 +94,20 @@ def fill_volume_with_model(
     # Create an output label volume.
     if resume_prediction is None:
         prediction = np.full_like(subvolume.image, background_label_id, dtype=np.uint64)
-        label_id = 0
+        label_id.value = 0
     else:
         if resume_prediction.shape != subvolume.image.shape:
             raise ValueError('Resume volume prediction is wrong shape.')
         prediction = resume_prediction
         prediction.flags.writeable = True
-        label_id = prediction.max()
+        label_id.value = prediction.max()
     # Create a conflict count volume that tracks locations where segmented
     # bodies overlap. For now the first body takes precedence in the
     # predicted labels.
     conflict_count = np.full_like(prediction, 0, dtype=np.uint32)
     lineage = np.full_like(subvolume.image, background_label_id, dtype=np.uint64)
 
-    def worker(worker_id, set_devices, model_file, image, seeds, results, lock, revoked, mask_image):
+    def worker(worker_id, set_devices, model_file, image, seeds, results, lock, revoked, mask_image, label_id):
         lock.acquire()
         import tensorflow as tf
 
@@ -153,7 +159,11 @@ def fill_volume_with_model(
             # Flood-fill and get resulting mask.
             # Allow reading outside the image volume bounds to allow segmentation
             # to fill all the way to the boundary.
-            region = Region(image, seed_vox=seed, sparse_mask=not CONFIG.make_mask_movie, 
+            potential_label_id = label_id.value + 1
+            do_sparse_mask = not CONFIG.make_mask_movie and potential_label_id not in CONFIG.postprocessing.save_bodies and potential_label_id+1 not in CONFIG.postprocessing.save_bodies and potential_label_id-1 not in CONFIG.postprocessing.save_bodies and potential_label_id-2 not in CONFIG.postprocessing.save_bodies
+            
+            region = Region(image, seed_vox=seed, 
+                    sparse_mask=do_sparse_mask, 
                     block_padding='reflect', mask_image=mask_image)
             region.bias_against_merge = bias
             early_termination = False
@@ -210,7 +220,6 @@ def fill_volume_with_model(
     #    random.shuffle(seeds)
     seeds = iter(seeds)
 
-    manager = Manager()
     # Queue of seeds to be picked up by workers.
     seed_queue = manager.Queue()
     # Queue of results from workers.
@@ -256,11 +265,11 @@ def fill_volume_with_model(
     loading_lock = manager.Lock()
     for worker_id in range(num_workers):
         w = Process(target=worker, args=(worker_id, set_devices, model_file, subvolume.image,
-                                         seed_queue, results_queue, loading_lock, revoked_seeds, subvolume.mask_image))
+                                         seed_queue, results_queue, loading_lock, revoked_seeds, subvolume.mask_image,label_id))
         w.start()
         workers.append(w)
 
-    last_checkpoint_label = label_id
+    last_checkpoint_label = label_id.value
 
     # For each seed, create region, fill, threshold, and merge to output volume.
     while dispatched_seeds:
@@ -318,9 +327,9 @@ def fill_volume_with_model(
             continue
 
         # Generate a label ID for this region.
-        label_id += 1
-        if label_id == background_label_id:
-            label_id += 1
+        label_id.value += 1
+        if label_id.value == background_label_id:
+            label_id.value += 1
 
         logging.debug('Adding body to prediction label volume.')
         bounds_shape = map(slice, bounds[0], bounds[1])
@@ -334,8 +343,13 @@ def fill_volume_with_model(
 
         conflict_count[bounds_shape][np.logical_and(np.logical_not(prediction_mask), mask)] += 1
         label_shape = np.logical_and(prediction_mask, mask)
-        prediction[bounds_shape][label_shape] = label_id
+        prediction[bounds_shape][label_shape] = label_id.value
         
+        if label_id.value in CONFIG.postprocessing.save_bodies:
+            mip = np.floor(mask*255)
+            mip = mip.astype('uint8')
+            tifffile.imsave('body_' + str(label_id.value) + '.tif', mip)
+
         # merge overlapping regions
         if CONFIG.export_lineages:
             overlapping_labels = lineage[bounds_shape][mask.astype(bool)]
@@ -371,21 +385,21 @@ def fill_volume_with_model(
             if merge_label is not None:
                 lineage[bounds_shape][label_shape] = merge_label 
             else:
-                lineage[bounds_shape][label_shape] = label_id
+                lineage[bounds_shape][label_shape] = label_id.value
 
-        label_pbar.set_description('Label {}'.format(label_id))
+        label_pbar.set_description('Label {}'.format(label_id.value))
         label_pbar.update(np.count_nonzero(label_shape))
         logging.info('Filled seed (%s) with %s voxels labeled %s.',
-                     np.array_str(seed), body_size, label_id)
+                     np.array_str(seed), body_size, label_id.value)
 
-        if max_bodies and label_id >= max_bodies:
+        if max_bodies and label_id.value >= max_bodies:
             # Drain the queues.
             while not seed_queue.empty():
                 seed_queue.get_nowait()
             break
 
         if checkpoint_filename is not None \
-                and label_id - last_checkpoint_label > checkpoint_label_interval:
+                and label_id.value - last_checkpoint_label > checkpoint_label_interval:
             
             current_type = np.uint64
             config = HDF5Volume.write_file(
@@ -397,6 +411,7 @@ def fill_volume_with_model(
             with open(checkpoint_filename + '.toml', 'wb') as tomlfile:
                 tomlfile.write('# Filling model: {}\n'.format(model_file))
                 tomlfile.write(str(toml.dumps({'dataset': [config]})))
+            last_checkpoint_label = label_id.value
 
     for _ in range(num_workers):
         seed_queue.put('DONE')
