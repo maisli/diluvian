@@ -86,6 +86,8 @@ def patch_prediction_copy(model):
     ----------
     model : keras.engine.Model
     """
+    model.train_function = None
+    model.test_function = None
     model._orig_train_on_batch = model.train_on_batch
 
     def train_on_batch(self, x, y, **kwargs):
@@ -588,6 +590,9 @@ def build_training_gen(training_volumes, seed_generator=None,
     else:
         worker_gens_weights = [None]*len(worker_gens)
 
+    for g in worker_gens_weights:
+        print('worker gen weight: %s', g)
+
     kludges = [{'inputs': None, 'outputs': None} for _ in range(CONFIG.training.num_workers)]
     # Create a training data generator for each worker.
     training_data = [MovingTrainingGenerator(
@@ -707,6 +712,9 @@ def train_network(
     callbacks.extend(validation.callbacks)
     callbacks.extend(training.callbacks)
 
+    callbacksNoVal = []
+    callbacksNoVal.extend(training.callbacks)
+
     validation_mode = CONFIG.training.validation_metric['mode']
 
     if CONFIG.training.early_abort_epoch is not None and \
@@ -718,9 +726,15 @@ def train_network(
                                      monitor='val_subv_metric',
                                      save_best_only=False,
                                      mode=validation_mode,
-                                     period=30))
+                                     period=5))
+    
+    callbacksNoVal.append(ModelCheckpoint(model_output_filebase + '.hdf5',
+                                     monitor='loss',
+                                     save_best_only=False,
+                                     period=5))
     if model_checkpoint_file:
         callbacks.append(ModelCheckpoint(model_checkpoint_file))
+        callbacksNoVal.append(ModelCheckpoint(model_checkpoint_file))
     callbacks.append(EarlyStopping(monitor='val_subv_metric',
                                    patience=CONFIG.training.patience,
                                    mode=validation_mode))
@@ -736,7 +750,8 @@ def train_network(
                 steps_per_epoch=training.steps_per_epoch,
                 epochs=CONFIG.training.num_epochs_without_validation ,
                 max_queue_size=len(training.gens) - 1,
-                workers=1)
+                workers=1,
+                callbacks=callbacksNoVal)
         
         write_keras_history_to_csv(history, model_output_filebase + '_noValidation.csv')
 

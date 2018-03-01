@@ -64,7 +64,7 @@ class Region(object):
         Whether to generate moves based on the probabilities only in the newly
         predicted mask block (if true), or on the mask block once combined with
         the existing probability mask (if false).
-    move_check_thickness : int
+    move_check_thickness : ndarray
         Thickness in voxels to check around the move plane in each direction
         when determining which moves to queue. See ``get_moves`` method.
     """
@@ -294,12 +294,20 @@ class Region(object):
             move_along_axes = map(np.array, [(1, 0, 0),(-1, 0, 0), (0, 1, 0),
                 (0, -1, 0), (0, 0, 1), (0, 0, -1)])
 
-
         for move in move_along_axes:
             plane_min = ctr - (-2 * np.maximum(move, 0) + 1) * self.MOVE_DELTA \
                     - np.abs(move) * (self.move_check_thickness - 1)
             plane_max = ctr + (+2 * np.minimum(move, 0) + 1) * self.MOVE_DELTA \
                     + np.abs(move) * (self.move_check_thickness - 1) + 1
+            if CONFIG.model.dont_move_in_plane:
+                for axis, move_per_axis in enumerate(move):
+                    if move_per_axis == 0:
+                        plane_min[axis] = ctr[axis] - (self.move_check_thickness[axis] - 1)
+                        plane_max[axis] = ctr[axis] + (self.move_check_thickness[axis] - 1) + 1
+            elif CONFIG.model.move_in_xy_plane_only:
+                if move[0] == 0:
+                    plane_min[0] = ctr[0] - (self.move_check_thickness[0] - 1)
+                    plane_max[0] = ctr[0] + (self.move_check_thickness[0] - 1) + 1
             moves.append({'move': move, 
                 'v': mask[plane_min[0]:plane_max[0],
                     plane_min[1]:plane_max[1],
@@ -349,6 +357,8 @@ class Region(object):
         if self.bias_against_merge:
             update_mask = np.isnan(current_mask) | (current_mask > 0.5) | np.less(mask_block, current_mask)
             current_mask[update_mask] = mask_block[update_mask]
+        elif CONFIG.model.dont_update_mask_above_center:
+            current_mask[0:(mask_max[0]+pad_post[0]-mask_min[0]-pad_pre[0])//2+self.MOVE_DELTA[0],:,:] = mask_block[0:(mask_max[0]+pad_post[0]-mask_min[0]-pad_pre[0])//2+self.MOVE_DELTA[0],:,:] 
         else:
             current_mask[:] = mask_block
 

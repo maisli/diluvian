@@ -68,7 +68,7 @@ class ModelConfig(BaseConfig):
     t_final : float, optional
         Threshold mask probability to produce the final segmentation. Defaults
         to ``t_move``.
-    move_check_thickness : int
+    move_check_thickness : ndarray
         Thickness of move check plane in voxels. Setting this greater than 1
         is useful to make moves more robust even if the move grid aligns with
         missing sections or image artifacts.
@@ -95,7 +95,7 @@ class ModelConfig(BaseConfig):
         self.v_false = float(settings.get('v_false', 0.05))
         self.t_move = float(settings.get('t_move', 0.9))
         self.t_final = float(settings.get('t_final', self.t_move))
-        self.move_check_thickness = int(settings.get('move_check_thickness', 1))
+        self.move_check_thickness = np.array(settings.get('move_check_thickness', [1, 1, 1]))
         self.move_priority = str(settings.get('move_priority', 'descending'))
         self.move_recheck = bool(settings.get('move_recheck', True))
         self.move_only_in_mask = bool(settings.get('move_only_in_mask', False))
@@ -108,6 +108,9 @@ class ModelConfig(BaseConfig):
                                                            self.input_fov_shape + self.move_step * 4))
         self.dont_move_backwards = bool(settings.get('dont_move_backwards', False))
         self.t_merge = float(settings.get('t_merge', 0.7))
+        self.dont_update_mask_above_center = bool(settings.get('dont_update_mask_above_center', False))
+        self.dont_move_in_plane = bool(settings.get('dont_move_in_plane', False))
+        self.move_in_xy_plane_only = bool(settings.get('move_in_xy_plane_only', False))
         self.num_overlapping_frames = int(settings.get('num_overlapping_frames', 20))
         self.min_above_t_merge = int(settings.get('min_above_t_merge', 15))
 
@@ -374,6 +377,8 @@ class PostprocessingConfig(BaseConfig):
     """
     def __init__(self, settings):
         self.closing_shape = settings.get('closing_shape', None)
+        self.save_bodies = np.array(settings.get('save_bodies', []))
+
 
 
 class Config(object):
