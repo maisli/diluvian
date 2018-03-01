@@ -107,8 +107,9 @@ class ModelConfig(BaseConfig):
         self.validation_subv_shape = np.array(settings.get('validation_subv_shape',
                                                            self.input_fov_shape + self.move_step * 4))
         self.dont_move_backwards = bool(settings.get('dont_move_backwards', False))
-        self.t_merge = float(settings.get('t_merge', 0.8))
+        self.t_merge = float(settings.get('t_merge', 0.7))
         self.num_overlapping_frames = int(settings.get('num_overlapping_frames', 20))
+        self.min_above_t_merge = int(settings.get('min_above_t_merge', 15))
 
 
     @property
@@ -407,6 +408,7 @@ class Config(object):
 
         self.make_mask_movie = False
         self.export_lineages = bool(settings.get('export_lineages', True))
+        self.spare_seeds = bool(settings.get('spare_seeds', False))
 
     def __str__(self):
         sanitized = {}

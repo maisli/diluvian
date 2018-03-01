@@ -191,13 +191,28 @@ def fill_volume_with_model(
                 seeds = generator(subvolume.image, subvolume.mask_image, sigma=sigma)
             else:
                 seeds = generator(subvolume.image, sigma=sigma)
+            if CONFIG.spare_seeds:
+                z,y,x = subvolume.image.shape
+                if subvolume.mask_image is not None:
+                    image_slice = np.reshape(subvolume.image[z-1,:,:], (1,y,x))
+                    mask_slice = np.reshape(subvolume.mask_image[z-1,:,:], (1,y,x))
+                    spare_seeds = generator(image_slice, mask_slice, sigma = 0)
+                    spare_seeds = spare_seeds + np.array([z-1,0,0])
+                    if filter_seeds_by_mask and volume.mask_data is not None:
+                        spare_seeds = [s for s in spare_seeds if volume.mask_data[tuple(volume.world_coord_to_local(s))]]
+
         else:
             seeds = generator(subvolume.image)
     
     if filter_seeds_by_mask and volume.mask_data is not None:
         seeds = [s for s in seeds if volume.mask_data[tuple(volume.world_coord_to_local(s))]]
     seeds.sort(key=lambda x: x[0], reverse=True)
-    #seeds = seeds[100:200]
+    if CONFIG.spare_seeds:
+        idx = [i for i, x in enumerate(seeds) if x[0] == subvolume.image.shape[0]-1 ]
+        for seed in spare_seeds:
+            seeds.insert(idx[-1]+1, seed)
+
+    #seeds = seeds[200:500]
     #seeds = [np.array([179, 418, 599], dtype=np.int64), np.array([179, 412, 609], dtype=np.int64)    ,np.array([179,439, 536], dtype=np.int64), np.array([179,449,541], dtype=np.int64)]
     
     #idx = np.random.choice(len(seeds),15, replace=True)
@@ -334,7 +349,6 @@ def fill_volume_with_model(
 
         conflict_count[bounds_shape][np.logical_and(np.logical_not(prediction_mask), mask)] += 1
         label_shape = np.logical_and(prediction_mask, mask)
-        prediction[bounds_shape][label_shape] = label_id
         
         # merge overlapping regions
         if CONFIG.export_lineages:
@@ -349,29 +363,39 @@ def fill_volume_with_model(
                     if merge_label is None:
                         overlap = np.sum(np.logical_and(mask, lineage[bounds_shape] == label), 
                                 axis=(1,2)).astype(np.float32) / np.sum(mask, axis=(1,2))
-                        min_frames = int(0.75*CONFIG.model.num_overlapping_frames)
+                        num_frames = CONFIG.model.num_overlapping_frames
+                        min_frames = CONFIG.model.min_above_t_merge
                         overlap = overlap > CONFIG.model.t_merge
-                        
-                        # check overlap of subsequent frames
-                        for i in range(len(overlap) - min_frames):
-                            if np.sum(overlap[i:i+min_frames]) >= min_frames:
-                                merge_label = label
-                                break
+                        frame_idx = np.flip(np.sort(np.where(overlap == True)[0]), axis=0)
 
-                        # check overlap in the first subsequent frames of the video
-                        if merge_label is None and bounds[0][0] < min_frames and \
-                                np.any(overlap[0:min_frames] > 0):
-                            stop = min(bounds[1][0], min_frames)
-                            if np.any(np.cumsum(overlap[0:stop]) == np.array(range(stop)) + 1):
-                                merge_label = label
-                                break
+                        for i in frame_idx:
+                            if i > 0:
+                                if i >= num_frames - 1:
+                                    if np.sum(overlap[i-num_frames+1:i+1]) >= min_frames:
+                                        merge_frame = i
+                                        merge_label = label
+                                        break
+                                if i < num_frames -1 and bounds[0][0] == 0:
+                                    if np.sum(overlap[0:i+1]) == i:
+                                        merge_frame = i
+                                        merge_label = label
+                                        break
                     else:
                         break
 
             if merge_label is not None:
-                lineage[bounds_shape][label_shape] = merge_label 
+                print("merge label: ", merge_label, "merge frame: ", merge_frame)
+                merge_shape = label_shape.copy()
+                merge_shape[0:merge_frame+1,:,:] = 0
+                lineage[bounds_shape][merge_shape] = merge_label 
+                prediction[bounds_shape][merge_shape] = label_id
+                
             else:
                 lineage[bounds_shape][label_shape] = label_id
+                prediction[bounds_shape][label_shape] = label_id
+        
+        else:
+            prediction[bounds_shape][label_shape] = label_id
 
         label_pbar.set_description('Label {}'.format(label_id))
         label_pbar.update(np.count_nonzero(label_shape))
