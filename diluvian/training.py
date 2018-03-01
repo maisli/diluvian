@@ -716,8 +716,9 @@ def train_network(
 
     callbacks.append(ModelCheckpoint(model_output_filebase + '.hdf5',
                                      monitor='val_subv_metric',
-                                     save_best_only=True,
-                                     mode=validation_mode))
+                                     save_best_only=False,
+                                     mode=validation_mode,
+                                     period=30))
     if model_checkpoint_file:
         callbacks.append(ModelCheckpoint(model_checkpoint_file))
     callbacks.append(EarlyStopping(monitor='val_subv_metric',
