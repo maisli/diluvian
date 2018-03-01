@@ -401,10 +401,16 @@ def fill_volume_with_model(
 
             if merge_label is not None:
                 #print("merge label: ", merge_label, ", merge frame: ", merge_frame)
+                
+                split_shape = label_shape.copy()
                 merge_shape = label_shape.copy()
-                merge_shape[0:merge_frame+1,:,:] = 0
-                lineage[bounds_shape][merge_shape] = merge_label 
-                prediction[bounds_shape][merge_shape] = label_id.value
+                split_shape[0:merge_frame+1,:,:] = 0
+                merge_shape[merge_frame+1:,:,:] = 0
+                
+                lineage[bounds_shape][label_shape] = merge_label 
+                
+                prediction[bounds_shape][split_shape] = label_id.value
+                prediction[bounds_shape][merge_shape] = merge_label
                 
             else:
                 lineage[bounds_shape][label_shape] = label_id.value
