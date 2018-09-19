@@ -436,6 +436,7 @@ def load_volumes(volume_files, in_memory, name_regex=None,
     from .volumes import HDF5Volume
 
     print('Loading volumes...')
+    
     if volume_files:
         volumes = {}
         for volume_file in volume_files:
@@ -444,7 +445,7 @@ def load_volumes(volume_files, in_memory, name_regex=None,
     else:
         volumes = HDF5Volume.from_toml(os.path.join(os.path.dirname(__file__), 
             'conf', 'cremi_datasets.toml'))
-
+    
     if name_regex is not None:
         name_regex = re.compile(name_regex)
         volumes = {k: v for k, v in six.iteritems(volumes) if name_regex.match(k)}

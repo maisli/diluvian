@@ -1,0 +1,870 @@
+[[dataset]]
+name = "a0001"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0001/raw"
+label_dataset = "a0001/gt/neuron_ids"
+
+[[dataset]]
+name = "a0002"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0002/raw"
+label_dataset = "a0002/gt/neuron_ids"
+
+[[dataset]]
+name = "a0004"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0004/raw"
+label_dataset = "a0004/gt/neuron_ids"
+
+[[dataset]]
+name = "a0006"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0006/raw"
+label_dataset = "a0006/gt/neuron_ids"
+
+[[dataset]]
+name = "a0007"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0007/raw"
+label_dataset = "a0007/gt/neuron_ids"
+
+[[dataset]]
+name = "a0008"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0008/raw"
+label_dataset = "a0008/gt/neuron_ids"
+
+[[dataset]]
+name = "a0009"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0009/raw"
+label_dataset = "a0009/gt/neuron_ids"
+
+[[dataset]]
+name = "a0011"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0011/raw"
+label_dataset = "a0011/gt/neuron_ids"
+
+[[dataset]]
+name = "a0012"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0012/raw"
+label_dataset = "a0012/gt/neuron_ids"
+
+[[dataset]]
+name = "a0013"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0013/raw"
+label_dataset = "a0013/gt/neuron_ids"
+
+[[dataset]]
+name = "a0014"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0014/raw"
+label_dataset = "a0014/gt/neuron_ids"
+
+[[dataset]]
+name = "a0015"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0015/raw"
+label_dataset = "a0015/gt/neuron_ids"
+
+[[dataset]]
+name = "a0016"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0016/raw"
+label_dataset = "a0016/gt/neuron_ids"
+
+[[dataset]]
+name = "a0017"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0017/raw"
+label_dataset = "a0017/gt/neuron_ids"
+
+[[dataset]]
+name = "a0018"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0018/raw"
+label_dataset = "a0018/gt/neuron_ids"
+
+[[dataset]]
+name = "a0019"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0019/raw"
+label_dataset = "a0019/gt/neuron_ids"
+
+[[dataset]]
+name = "a0021"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0021/raw"
+label_dataset = "a0021/gt/neuron_ids"
+
+[[dataset]]
+name = "a0023"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0023/raw"
+label_dataset = "a0023/gt/neuron_ids"
+
+[[dataset]]
+name = "a0024"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0024/raw"
+label_dataset = "a0024/gt/neuron_ids"
+
+[[dataset]]
+name = "a0025"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0025/raw"
+label_dataset = "a0025/gt/neuron_ids"
+
+[[dataset]]
+name = "a0026"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0026/raw"
+label_dataset = "a0026/gt/neuron_ids"
+
+[[dataset]]
+name = "a0027"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0027/raw"
+label_dataset = "a0027/gt/neuron_ids"
+
+[[dataset]]
+name = "a0028"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0028/raw"
+label_dataset = "a0028/gt/neuron_ids"
+
+[[dataset]]
+name = "a0030"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0030/raw"
+label_dataset = "a0030/gt/neuron_ids"
+
+[[dataset]]
+name = "a0031"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0031/raw"
+label_dataset = "a0031/gt/neuron_ids"
+
+[[dataset]]
+name = "a0032"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0032/raw"
+label_dataset = "a0032/gt/neuron_ids"
+
+[[dataset]]
+name = "a0034"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0034/raw"
+label_dataset = "a0034/gt/neuron_ids"
+
+[[dataset]]
+name = "a0035"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0035/raw"
+label_dataset = "a0035/gt/neuron_ids"
+
+[[dataset]]
+name = "a0036"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0036/raw"
+label_dataset = "a0036/gt/neuron_ids"
+
+[[dataset]]
+name = "a0037"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0037/raw"
+label_dataset = "a0037/gt/neuron_ids"
+
+[[dataset]]
+name = "a0038"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0038/raw"
+label_dataset = "a0038/gt/neuron_ids"
+
+[[dataset]]
+name = "a0039"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0039/raw"
+label_dataset = "a0039/gt/neuron_ids"
+
+[[dataset]]
+name = "a0042"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0042/raw"
+label_dataset = "a0042/gt/neuron_ids"
+
+[[dataset]]
+name = "a0043"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0043/raw"
+label_dataset = "a0043/gt/neuron_ids"
+
+[[dataset]]
+name = "a0045"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0045/raw"
+label_dataset = "a0045/gt/neuron_ids"
+
+[[dataset]]
+name = "a0046"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0046/raw"
+label_dataset = "a0046/gt/neuron_ids"
+
+[[dataset]]
+name = "a0047"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0047/raw"
+label_dataset = "a0047/gt/neuron_ids"
+
+[[dataset]]
+name = "a0048"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0048/raw"
+label_dataset = "a0048/gt/neuron_ids"
+
+[[dataset]]
+name = "a0049"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0049/raw"
+label_dataset = "a0049/gt/neuron_ids"
+
+[[dataset]]
+name = "a0050"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0050/raw"
+label_dataset = "a0050/gt/neuron_ids"
+
+[[dataset]]
+name = "a0051"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0051/raw"
+label_dataset = "a0051/gt/neuron_ids"
+
+[[dataset]]
+name = "a0052"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0052/raw"
+label_dataset = "a0052/gt/neuron_ids"
+
+[[dataset]]
+name = "a0053"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0053/raw"
+label_dataset = "a0053/gt/neuron_ids"
+
+[[dataset]]
+name = "a0054"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0054/raw"
+label_dataset = "a0054/gt/neuron_ids"
+
+[[dataset]]
+name = "a0055"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0055/raw"
+label_dataset = "a0055/gt/neuron_ids"
+
+[[dataset]]
+name = "a0056"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0056/raw"
+label_dataset = "a0056/gt/neuron_ids"
+
+[[dataset]]
+name = "a0057"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0057/raw"
+label_dataset = "a0057/gt/neuron_ids"
+
+[[dataset]]
+name = "a0059"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0059/raw"
+label_dataset = "a0059/gt/neuron_ids"
+
+[[dataset]]
+name = "a0060"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0060/raw"
+label_dataset = "a0060/gt/neuron_ids"
+
+[[dataset]]
+name = "a0061"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0061/raw"
+label_dataset = "a0061/gt/neuron_ids"
+
+[[dataset]]
+name = "a0062"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0062/raw"
+label_dataset = "a0062/gt/neuron_ids"
+
+[[dataset]]
+name = "a0063"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0063/raw"
+label_dataset = "a0063/gt/neuron_ids"
+
+[[dataset]]
+name = "a0064"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0064/raw"
+label_dataset = "a0064/gt/neuron_ids"
+
+[[dataset]]
+name = "a0065"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0065/raw"
+label_dataset = "a0065/gt/neuron_ids"
+
+[[dataset]]
+name = "a0067"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0067/raw"
+label_dataset = "a0067/gt/neuron_ids"
+
+[[dataset]]
+name = "a0068"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0068/raw"
+label_dataset = "a0068/gt/neuron_ids"
+
+[[dataset]]
+name = "a0069"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0069/raw"
+label_dataset = "a0069/gt/neuron_ids"
+
+[[dataset]]
+name = "a0070"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0070/raw"
+label_dataset = "a0070/gt/neuron_ids"
+
+[[dataset]]
+name = "a0071"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0071/raw"
+label_dataset = "a0071/gt/neuron_ids"
+
+[[dataset]]
+name = "a0072"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0072/raw"
+label_dataset = "a0072/gt/neuron_ids"
+
+[[dataset]]
+name = "a0073"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0073/raw"
+label_dataset = "a0073/gt/neuron_ids"
+
+[[dataset]]
+name = "a0075"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0075/raw"
+label_dataset = "a0075/gt/neuron_ids"
+
+[[dataset]]
+name = "a0076"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0076/raw"
+label_dataset = "a0076/gt/neuron_ids"
+
+[[dataset]]
+name = "a0077"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0077/raw"
+label_dataset = "a0077/gt/neuron_ids"
+
+[[dataset]]
+name = "a0079"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0079/raw"
+label_dataset = "a0079/gt/neuron_ids"
+
+[[dataset]]
+name = "a0081"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0081/raw"
+label_dataset = "a0081/gt/neuron_ids"
+
+[[dataset]]
+name = "a0082"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0082/raw"
+label_dataset = "a0082/gt/neuron_ids"
+
+[[dataset]]
+name = "a0083"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0083/raw"
+label_dataset = "a0083/gt/neuron_ids"
+
+[[dataset]]
+name = "a0084"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0084/raw"
+label_dataset = "a0084/gt/neuron_ids"
+
+[[dataset]]
+name = "a0085"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0085/raw"
+label_dataset = "a0085/gt/neuron_ids"
+
+[[dataset]]
+name = "a0086"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0086/raw"
+label_dataset = "a0086/gt/neuron_ids"
+
+[[dataset]]
+name = "a0088"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0088/raw"
+label_dataset = "a0088/gt/neuron_ids"
+
+[[dataset]]
+name = "a0089"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0089/raw"
+label_dataset = "a0089/gt/neuron_ids"
+
+[[dataset]]
+name = "a0090"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0090/raw"
+label_dataset = "a0090/gt/neuron_ids"
+
+[[dataset]]
+name = "a0091"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0091/raw"
+label_dataset = "a0091/gt/neuron_ids"
+
+[[dataset]]
+name = "a0092"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0092/raw"
+label_dataset = "a0092/gt/neuron_ids"
+
+[[dataset]]
+name = "a0093"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0093/raw"
+label_dataset = "a0093/gt/neuron_ids"
+
+[[dataset]]
+name = "a0094"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0094/raw"
+label_dataset = "a0094/gt/neuron_ids"
+
+[[dataset]]
+name = "a0095"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0095/raw"
+label_dataset = "a0095/gt/neuron_ids"
+
+[[dataset]]
+name = "a0096"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0096/raw"
+label_dataset = "a0096/gt/neuron_ids"
+
+[[dataset]]
+name = "a0097"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0097/raw"
+label_dataset = "a0097/gt/neuron_ids"
+
+[[dataset]]
+name = "a0098"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0098/raw"
+label_dataset = "a0098/gt/neuron_ids"
+
+[[dataset]]
+name = "a0099"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0099/raw"
+label_dataset = "a0099/gt/neuron_ids"
+
+[[dataset]]
+name = "a0100"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0100/raw"
+label_dataset = "a0100/gt/neuron_ids"
+
+[[dataset]]
+name = "a0101"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0101/raw"
+label_dataset = "a0101/gt/neuron_ids"
+
+[[dataset]]
+name = "a0102"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0102/raw"
+label_dataset = "a0102/gt/neuron_ids"
+
+[[dataset]]
+name = "a0103"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0103/raw"
+label_dataset = "a0103/gt/neuron_ids"
+
+[[dataset]]
+name = "a0104"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0104/raw"
+label_dataset = "a0104/gt/neuron_ids"
+
+[[dataset]]
+name = "a0105"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0105/raw"
+label_dataset = "a0105/gt/neuron_ids"
+
+[[dataset]]
+name = "a0107"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0107/raw"
+label_dataset = "a0107/gt/neuron_ids"
+
+[[dataset]]
+name = "a0108"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0108/raw"
+label_dataset = "a0108/gt/neuron_ids"
+
+[[dataset]]
+name = "a0109"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0109/raw"
+label_dataset = "a0109/gt/neuron_ids"
+
+[[dataset]]
+name = "a0111"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0111/raw"
+label_dataset = "a0111/gt/neuron_ids"
+
+[[dataset]]
+name = "a0112"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0112/raw"
+label_dataset = "a0112/gt/neuron_ids"
+
+[[dataset]]
+name = "a0113"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0113/raw"
+label_dataset = "a0113/gt/neuron_ids"
+
+[[dataset]]
+name = "a0114"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0114/raw"
+label_dataset = "a0114/gt/neuron_ids"
+
+[[dataset]]
+name = "a0115"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0115/raw"
+label_dataset = "a0115/gt/neuron_ids"
+
+[[dataset]]
+name = "a0116"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0116/raw"
+label_dataset = "a0116/gt/neuron_ids"
+
+[[dataset]]
+name = "a0117"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0117/raw"
+label_dataset = "a0117/gt/neuron_ids"
+
+[[dataset]]
+name = "a0118"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0118/raw"
+label_dataset = "a0118/gt/neuron_ids"
+
+[[dataset]]
+name = "a0119"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0119/raw"
+label_dataset = "a0119/gt/neuron_ids"
+
+[[dataset]]
+name = "a0121"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0121/raw"
+label_dataset = "a0121/gt/neuron_ids"
+
+[[dataset]]
+name = "a0122"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0122/raw"
+label_dataset = "a0122/gt/neuron_ids"
+
+[[dataset]]
+name = "a0123"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0123/raw"
+label_dataset = "a0123/gt/neuron_ids"
+
+[[dataset]]
+name = "a0124"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0124/raw"
+label_dataset = "a0124/gt/neuron_ids"
+
+[[dataset]]
+name = "a0125"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0125/raw"
+label_dataset = "a0125/gt/neuron_ids"
+
+[[dataset]]
+name = "a0126"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0126/raw"
+label_dataset = "a0126/gt/neuron_ids"
+
+[[dataset]]
+name = "a0127"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0127/raw"
+label_dataset = "a0127/gt/neuron_ids"
+
+[[dataset]]
+name = "a0128"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0128/raw"
+label_dataset = "a0128/gt/neuron_ids"
+
+[[dataset]]
+name = "a0129"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0129/raw"
+label_dataset = "a0129/gt/neuron_ids"
+
+[[dataset]]
+name = "a0130"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0130/raw"
+label_dataset = "a0130/gt/neuron_ids"
+
+[[dataset]]
+name = "a0131"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0131/raw"
+label_dataset = "a0131/gt/neuron_ids"
+
+[[dataset]]
+name = "a0132"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0132/raw"
+label_dataset = "a0132/gt/neuron_ids"
+
+[[dataset]]
+name = "a0133"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0133/raw"
+label_dataset = "a0133/gt/neuron_ids"
+
+[[dataset]]
+name = "a0134"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0134/raw"
+label_dataset = "a0134/gt/neuron_ids"
+
+[[dataset]]
+name = "a0135"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0135/raw"
+label_dataset = "a0135/gt/neuron_ids"
+
+[[dataset]]
+name = "a0136"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0136/raw"
+label_dataset = "a0136/gt/neuron_ids"
+
+[[dataset]]
+name = "a0137"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0137/raw"
+label_dataset = "a0137/gt/neuron_ids"
+
+[[dataset]]
+name = "a0139"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0139/raw"
+label_dataset = "a0139/gt/neuron_ids"
+
+[[dataset]]
+name = "a0141"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0141/raw"
+label_dataset = "a0141/gt/neuron_ids"
+
+[[dataset]]
+name = "a0142"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0142/raw"
+label_dataset = "a0142/gt/neuron_ids"
+
+[[dataset]]
+name = "a0143"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0143/raw"
+label_dataset = "a0143/gt/neuron_ids"
+
+[[dataset]]
+name = "a0144"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0144/raw"
+label_dataset = "a0144/gt/neuron_ids"
+
+[[dataset]]
+name = "a0145"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0145/raw"
+label_dataset = "a0145/gt/neuron_ids"
+
+[[dataset]]
+name = "a0147"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0147/raw"
+label_dataset = "a0147/gt/neuron_ids"
+
+[[dataset]]
+name = "a0148"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0148/raw"
+label_dataset = "a0148/gt/neuron_ids"
+
+[[dataset]]
+name = "a0149"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0149/raw"
+label_dataset = "a0149/gt/neuron_ids"
+
+[[dataset]]
+name = "a0152"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0152/raw"
+label_dataset = "a0152/gt/neuron_ids"
+
+[[dataset]]
+name = "a0153"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0153/raw"
+label_dataset = "a0153/gt/neuron_ids"
+
+[[dataset]]
+name = "a0154"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0154/raw"
+label_dataset = "a0154/gt/neuron_ids"
+
+[[dataset]]
+name = "a0155"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0155/raw"
+label_dataset = "a0155/gt/neuron_ids"
+
+[[dataset]]
+name = "a0156"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0156/raw"
+label_dataset = "a0156/gt/neuron_ids"
+
+[[dataset]]
+name = "a0157"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0157/raw"
+label_dataset = "a0157/gt/neuron_ids"
+
+[[dataset]]
+name = "a0158"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0158/raw"
+label_dataset = "a0158/gt/neuron_ids"
+
+[[dataset]]
+name = "a0159"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0159/raw"
+label_dataset = "a0159/gt/neuron_ids"
+
+[[dataset]]
+name = "a0160"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0160/raw"
+label_dataset = "a0160/gt/neuron_ids"
+
+[[dataset]]
+name = "a0161"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0161/raw"
+label_dataset = "a0161/gt/neuron_ids"
+
+[[dataset]]
+name = "a0162"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0162/raw"
+label_dataset = "a0162/gt/neuron_ids"
+
+[[dataset]]
+name = "a0163"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0163/raw"
+label_dataset = "a0163/gt/neuron_ids"
+
+[[dataset]]
+name = "a0164"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0164/raw"
+label_dataset = "a0164/gt/neuron_ids"
+
+[[dataset]]
+name = "a0165"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0165/raw"
+label_dataset = "a0165/gt/neuron_ids"
+
+[[dataset]]
+name = "a0166"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0166/raw"
+label_dataset = "a0166/gt/neuron_ids"
+
+[[dataset]]
+name = "a0167"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0167/raw"
+label_dataset = "a0167/gt/neuron_ids"
+
+[[dataset]]
+name = "a0168"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0168/raw"
+label_dataset = "a0168/gt/neuron_ids"
+
+[[dataset]]
+name = "a0169"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_cmtkHideo.hdf"
+image_dataset = "a0169/raw"
+label_dataset = "a0169/gt/neuron_ids"
+

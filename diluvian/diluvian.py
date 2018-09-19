@@ -78,8 +78,8 @@ def fill_volume_with_model(
         copy_gt_seeds=False,
         assigned_gpus=[]):
 
-    if CONFIG.training.num_gpus > len(assigned_gpus):
-        num_workers = len(assigned_gpus)
+    #if CONFIG.training.num_gpus > len(assigned_gpus):
+    #    num_workers = len(assigned_gpus)
   
     subvolume = volume.get_subvolume(SubvolumeBounds(start=np.zeros(3, dtype=np.int64), 
         stop=volume.shape), copy_gt_seeds)

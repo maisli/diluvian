@@ -295,6 +295,7 @@ def neuron_dt_seeds(image_data, seed_num):
     from skimage.feature import peak_local_max
     
     seeds = []
+    image_data = np.asarray(image_data)
     thresh = image_data > 0
     transform = ndimage.distance_transform_cdt(thresh)
     seeds = peak_local_max(transform, exclude_border=0, min_distance=20)

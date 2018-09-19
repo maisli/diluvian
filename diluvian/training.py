@@ -55,11 +55,16 @@ from .volumes import (
         PermuteAxesAugmentGenerator,
         RelabelSeedComponentGenerator,
         ElasticAugmentGenerator,
-        PermuteChannelsAugmentGenerator
+        PermuteChannelsAugmentGenerator,
+        DensityAugmentGenerator,
+        Volume
         )
 from .regions import (
         Region,
         )
+from datetime import datetime
+from scipy import misc
+from scipy import ndimage
 import pdb
 
 def plot_history(history):
@@ -211,6 +216,64 @@ class EarlyAbort(Callback):
                 raise EarlyAbortException('Aborted after epoch {} because {} was {} >= {}'.format(
                     self.threshold_epoch, self.monitor, current, self.threshold_value))
 
+"""
+class AugmentVolumeGenerator(Volume):
+    def __init__(self, volume, volumes):
+        super(AugmentVolumeGenerator, self).__init__(volume.resolution, volume.image_data, 
+                volume.label_data)
+        self.volumes = volumes
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+   
+        return_single_volume = 0.5
+        if np.random.sample() < return_single_volume:
+            return self.volume
+        
+        else:
+
+            label_data = np.asarray(self.volume.label_data)
+            labels = np.unique(label_data)
+            labels = labels[labels!=0]
+            label = labels[np.random.randint(0, len(labels))]
+
+            x_slice, y_slice, z_slice = ndimage.find_objects(label_data==label)[0]
+            #todo: bounding box muss noch um subvol / 2 in jeder dimension erweitert werden!
+            label_data = label_data[x_slice, y_slice, z_slice]
+            image_data = self.volume.image_data[x_slice, y_slice, z_slice]
+
+            v_next = False
+            overlay_threshold = 100
+            tries = min(len(self.volumes)-1, 10)
+            idx = label_data > 0
+
+            while v_next == False and tries > 0:
+                candidate = self.volumes[np.random.choice(list(self.volumes.keys()))]
+                candidate_label_data = candidate.label_data[x_slice, y_slice, z_slice]
+                if candidate_label_data.shape != label_data.shape:
+                    continue
+                overlay_idx = candidate_label_data > 0
+                if np.sum(np.logical_and(idx, overlay_idx)) <= overlay_threshold:
+                    v_next = True
+                tries -= 1
+
+            if v_next == False:
+                print("Couldnt find another volume to overlay with. Returning current \
+                        volume instead")
+                return self.volume
+            
+            candidate_image_data = candidate.image_data[x_slice, y_slice, z_slice]
+            image_data += candidate_image_data
+            image_data = image_data // 2
+            image_data = image_data.astype(self.volume.image_data.dtype)
+            
+            print('overlayed data')
+            misc.imsave('/groups/kainmueller/home/maisl/neuron_segmentation/overlayed/augm_vol_' + str(datetime.now()) + '.tif', np.max(image_data, axis=0))
+
+            return Volume(self.volume.resolution, image_data, label_data)
+"""
 
 def preprocess_subvolume_generator(subvolume_generator):
     """Apply non-augmentation preprocessing to a subvolume generator.
@@ -232,7 +295,7 @@ def preprocess_subvolume_generator(subvolume_generator):
     return gen
 
 
-def augment_subvolume_generator(subvolume_generator):
+def augment_subvolume_generator(subvolume_generator, volumes=None):
     """Apply data augmentations to a subvolume generator.
 
     Parameters
@@ -244,6 +307,8 @@ def augment_subvolume_generator(subvolume_generator):
     diluvian.volumes.SubvolumeGenerator
     """
     gen = subvolume_generator
+    if CONFIG.training.augment_density and volumes is not None:
+        gen = DensityAugmentGenerator(gen, CONFIG.training.augment_use_both, volumes)
     for axes in CONFIG.training.augment_permute_axes:
         gen = PermuteAxesAugmentGenerator(gen, CONFIG.training.augment_use_both, axes)
     for axis in CONFIG.training.augment_mirrors:
@@ -261,7 +326,6 @@ def augment_subvolume_generator(subvolume_generator):
         gen = ContrastAugmentGenerator(gen, CONFIG.training.augment_use_both, v['axis'], v['prob'],
                                        v['scaling_mean'], v['scaling_std'],
                                        v['center_mean'], v['center_std'])
-    
     if CONFIG.training.augment_elastic:
         gen = ElasticAugmentGenerator(gen, CONFIG.training.augment_use_both)
     if CONFIG.training.augment_permute_channels:
@@ -409,6 +473,11 @@ class MovingTrainingGenerator(six.Iterator):
                         self.fake_mask[r] = True
                 while block_data is None:
                     subvolume = six.next(self.subvolumes)
+                    # save subvolume examples
+                    if np.random.sample() < 0.01:
+                        snapshot = np.max(subvolume.image, axis=0)
+                        misc.imsave('/groups/kainmueller/home/maisl/neuron_segmentation/snapshots/subvol_' + str(datetime.now()) + '.tif', snapshot)
+
                     self.epoch_subvolumes += 1
                     self.f_as[r] = subvolume.f_a()
 
@@ -537,17 +606,18 @@ def build_training_gen(training_volumes, seed_generator=None,
     if len(training_volumes) == 1:
         single_vol = six.next(six.itervalues(training_volumes))
         training_volumes = {'dupe {}'.format(n): single_vol for n in range(CONFIG.training.num_workers)}
-
     training_gens = [
             augment_subvolume_generator(
                     preprocess_subvolume_generator(
-                            v.subvolume_generator(shape=CONFIG.model.training_subv_shape,
-                                                  label_margin=output_margin,
-                                                  seed_generator=seed_generator,
-                                                  prng_seed=prng_seed_generator.randint(0,10000) 
-                                                  if prng_seed_generator is not None else None,
-                                                  seeds_from_raw=seeds_from_raw)))
+                        v.subvolume_generator(
+                                shape=CONFIG.model.training_subv_shape,
+                                label_margin=output_margin,
+                                seed_generator=seed_generator,
+                                prng_seed=prng_seed_generator.randint(0,10000) 
+                                if prng_seed_generator is not None else None,
+                                seeds_from_raw=seeds_from_raw)), training_volumes)
             for v in six.itervalues(training_volumes)]
+    
     random.shuffle(training_gens)
 
     # Divide training generators up for workers.
@@ -592,15 +662,12 @@ def train_network(
         random_generator_state=False,
         seeds_from_raw=False,
         assigned_gpus=None):
-    
+   
+    t0 = datetime.now()
     random.seed(CONFIG.random_seed)
     
     import os
-    from datetime import datetime
 
-    # Only make given GPUs visible to Tensorflow so that it does not allocate
-    # all available memory on all devices.
-    # See: https://stackoverflow.com/questions/37893755
     if 'CUDA_VISIBLE_DEVICES' not in os.environ:
         os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
         gpu_id = assigned_gpus[0] if assigned_gpus is not None else str(1)
@@ -608,7 +675,6 @@ def train_network(
         print('CUDA_VISIBLE_DEVICES: ', os.environ['CUDA_VISIBLE_DEVICES'])
         print('CUDA_ROOT: ', os.environ['CUDA_ROOT'])
 
-    t0 = datetime.now()
     
     if model_file is None:
         factory = get_function(CONFIG.network.factory)
@@ -644,17 +710,19 @@ def train_network(
 
     logging.info('Using {} volumes for training, {} for validation.'.format(num_training, num_validation))
 
-    #validation = build_validation_gen(validation_volumes)
-    #training = build_training_gen(training_volumes)
-    
     prng_seed_generator = None 
     if random_generator_state:
         prng_seed_generator = np.random.RandomState(0)
 
+    
+    tr = datetime.now()
     validation = build_validation_gen(validation_volumes, seed_generator, 
             prng_seed_generator, seeds_from_raw)
+    print('build validation gen {}'.format(datetime.now() - tr))
+    tr = datetime.now()
     training = build_training_gen(training_volumes, seed_generator, 
             prng_seed_generator, seeds_from_raw)
+    print('build training gen {}'.format(datetime.now() - tr))
 
     callbacks = []
     callbacks.extend(validation.callbacks)
@@ -669,20 +737,22 @@ def train_network(
 
     callbacks.append(ModelCheckpoint(model_output_filebase + '.hdf5',
                                      monitor='val_subv_metric',
-                                     save_best_only=True,
-                                     mode=validation_mode))
+                                     save_best_only=False,
+                                     mode=validation_mode,
+                                     period=5))
     if model_checkpoint_file:
         callbacks.append(ModelCheckpoint(model_checkpoint_file))
     callbacks.append(EarlyStopping(monitor='val_subv_metric',
                                    patience=CONFIG.training.patience,
                                    mode=validation_mode))
+    
     # Activation histograms and weight images for TensorBoard will not work
     # because the Keras callback does not currently support validation data
     # generators.
     if tensorboard:
         callbacks.append(TensorBoard())
     
-    t1 = datetime.now()
+    tr = datetime.now()
 
     history = ffn.fit_generator(
             Roundrobin(*training.data, name='training outer'),
@@ -694,11 +764,11 @@ def train_network(
             validation_data=Roundrobin(*validation.data, name='validation outer'),
             validation_steps=validation.steps_per_epoch)
 
-    t2 = datetime.now()
+    print('training {}'.format(datetime.now() - tr))
+    
     write_keras_history_to_csv(history, model_output_filebase + '.csv')
 
-    print('prep elapsed time (hh:mm:ss.ms) {}'.format(t1-t0))
-    print('train elapsed time (hh:mm:ss.ms) {}'.format(t2-t1))
+    print('total time {}'.format(datetime.now() - t0))
 
     if viewer:
         viz_ex = itertools.islice(validation.data[0], 1)

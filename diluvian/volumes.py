@@ -17,6 +17,7 @@ from PIL import Image
 import pytoml as toml
 import requests
 from scipy import ndimage
+from scipy import misc
 import six
 from six.moves import range as xrange
 
@@ -24,7 +25,7 @@ from .config import CONFIG
 from .octrees import OctreeVolume
 from .util import get_nonzero_aabb
 from . import preprocessing
-import pdb
+from datetime import datetime
 
 DimOrder = namedtuple('DimOrder', ('X', 'Y', 'Z'))
 
@@ -112,15 +113,19 @@ class SubvolumeBounds(object):
 
 class Subvolume(object):
     """A subvolume of image data and an optional ground truth object mask."""
-    __slots__ = ('image', 'label_mask', 'seed', 'label_id', 'gt_seeds', 'label_image')
+    __slots__ = ('image', 'label_mask', 'seed', 'label_id', 'gt_seeds', 'label_image', 
+            'bounds_start', 'bounds_stop')
 
-    def __init__(self, image, label_mask, seed, label_id, gt_seeds=None, label_image=None):
+    def __init__(self, image, label_mask, seed, label_id, gt_seeds=None, label_image=None,
+            bounds_start=None, bounds_stop=None):
         self.image = image
         self.label_mask = label_mask
         self.seed = seed
         self.label_id = label_id
         self.gt_seeds = gt_seeds
         self.label_image = label_image
+        self.bounds_start = bounds_start
+        self.bounds_stop = bounds_stop
 
     def f_a(self):
         """Calculate the mask filling fraction of this subvolume.
@@ -390,6 +395,72 @@ class PermuteAxesAugmentGenerator(SubvolumeAugmentGenerator):
         return subv
 
 
+class DensityAugmentGenerator(SubvolumeAugmentGenerator):
+    """Repeats subvolumes from a subvolume generator with another volume overlayed.
+
+    For each subvolume in the original generator, this generator will yield two
+    subvolumes: the original subvolume and the subvolume with the image overlayed 
+    with another one.
+
+    Parameters
+    ----------
+    subvolume_generator : SubvolumeGenerator
+    return_both : bool
+        If true, return both the original and augmented volume in sequence.
+        If false, return either with equal probability.
+    volumes : dict of volumes
+    """
+    def __init__(self, subvolume_generator, return_both, volumes):
+        super(DensityAugmentGenerator, self).__init__(subvolume_generator, return_both)
+        self.volumes = volumes
+
+    def augment_subvolume(self):
+        
+        subv = self.subvolume
+        found_candidate = False
+        attempts = 10
+        overlap_threshold = 200 
+        
+        while found_candidate == False and attempts > 0:
+            
+            attempts -= 1
+            candidate = self.volumes[np.random.choice(list(self.volumes.keys()))]
+            candidate_labels = candidate.label_data[
+                    subv.bounds_start[0]:subv.bounds_stop[0],
+                    subv.bounds_start[1]:subv.bounds_stop[1],
+                    subv.bounds_start[2]:subv.bounds_stop[2]
+                    ]
+            if candidate_labels.shape != subv.label_mask.shape:
+                continue
+            overlap = np.sum(np.logical_and(subv.label_mask, candidate_labels > 0))
+            if overlap > overlap_threshold:
+                continue
+            else:
+                found_candidate = True
+        
+        if found_candidate == False:
+            print('cant find volume to overlay with, returning subv')
+            return subv
+        
+        candidate_image = candidate.image_data[
+                subv.bounds_start[0]:subv.bounds_stop[0],
+                subv.bounds_start[1]:subv.bounds_stop[1],
+                subv.bounds_start[2]:subv.bounds_stop[2],
+                :]
+        
+        if np.issubdtype(candidate_image.dtype, np.integer):
+            candidate_image = candidate_image.astype(np.float32) / 256.0
+        
+        image_data = subv.image + candidate_image
+        image_data = image_data / 2
+        image_data = image_data.astype(subv.image.dtype)
+        
+        misc.imsave('/groups/kainmueller/home/maisl/neuron_segmentation/overlayed/augm_vol_' + str(datetime.now()) + '.tif', np.max(image_data, axis=0))
+
+        subv = Subvolume(image_data, subv.label_mask, subv.seed, subv.label_id)
+        return subv
+        
+        
 class PermuteChannelsAugmentGenerator(SubvolumeAugmentGenerator):
     """Repeats subvolumes from a subvolume generator with permutation of the RGB channels.
 
@@ -739,9 +810,6 @@ class Volume(object):
                         np.mean(image_data[:,:,:,channel_id]))
         print(self.image_data.shape, self.image_data.dtype, self.label_data.shape)"""
 
-
-        
-
     def local_coord_to_world(self, a):
         return a
 
@@ -858,7 +926,7 @@ class Volume(object):
             gt_seeds_subvol = self.world_mat_to_local(gt_seeds_subvol)
 
         return Subvolume(image_subvol, label_mask, seed, label_id, gt_seeds_subvol, 
-                label_subvol)
+                label_subvol, bounds.start, bounds.stop)
 
     class SubvolumeBoundsGenerator(six.Iterator):
         def __init__(self, volume, shape, label_margin=None, seed_generator=None, 
@@ -1217,6 +1285,7 @@ class HDF5Volume(Volume):
         with open(filename, 'rb') as fin:
             datasets = toml.load(fin).get('dataset', [])
             for dataset in datasets:
+                
                 hdf5_file = dataset['hdf5_file']
                 if dataset.get('use_keras_cache', False):
                     hdf5_file = get_file(hdf5_file, dataset['download_url'], 
@@ -1264,7 +1333,7 @@ class HDF5Volume(Volume):
             data = kwargs.get('{}_data'.format(channel), None)
             dataset_name = kwargs.get('{}_dataset'.format(channel), default_datasets[channel])
             if data is not None:
-                dataset = h5file.create_dataset(dataset_name, data=data, dtype=data.dtype, compression='lzf')
+                dataset = h5file.create_dataset(dataset_name, data=data, dtype=data.dtype, compression='gzip')
                 dataset.attrs['resolution'] = resolution
                 config['{}_dataset'.format(channel)] = dataset_name
 

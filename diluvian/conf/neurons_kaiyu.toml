@@ -1,0 +1,102 @@
+[[dataset]]
+name = "n001"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n001/raw"
+label_dataset = "n001/gt/neuron_ids"
+
+[[dataset]]
+name = "n002"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n002/raw"
+label_dataset = "n002/gt/neuron_ids"
+
+[[dataset]]
+name = "n003"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n003/raw"
+label_dataset = "n003/gt/neuron_ids"
+
+[[dataset]]
+name = "n004"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n004/raw"
+label_dataset = "n004/gt/neuron_ids"
+
+[[dataset]]
+name = "n005"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n005/raw"
+label_dataset = "n005/gt/neuron_ids"
+
+[[dataset]]
+name = "n006"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n006/raw"
+label_dataset = "n006/gt/neuron_ids"
+
+[[dataset]]
+name = "n007"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n007/raw"
+label_dataset = "n007/gt/neuron_ids"
+
+[[dataset]]
+name = "n009"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n009/raw"
+label_dataset = "n009/gt/neuron_ids"
+
+[[dataset]]
+name = "n010"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n010/raw"
+label_dataset = "n010/gt/neuron_ids"
+
+[[dataset]]
+name = "n011"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n011/raw"
+label_dataset = "n011/gt/neuron_ids"
+
+[[dataset]]
+name = "n012"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n012/raw"
+label_dataset = "n012/gt/neuron_ids"
+
+[[dataset]]
+name = "n013"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n013/raw"
+label_dataset = "n013/gt/neuron_ids"
+
+[[dataset]]
+name = "n014"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n014/raw"
+label_dataset = "n014/gt/neuron_ids"
+
+[[dataset]]
+name = "n015"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n015/raw"
+label_dataset = "n015/gt/neuron_ids"
+
+[[dataset]]
+name = "n016"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n016/raw"
+label_dataset = "n016/gt/neuron_ids"
+
+[[dataset]]
+name = "n017"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n017/raw"
+label_dataset = "n017/gt/neuron_ids"
+
+[[dataset]]
+name = "n018"
+hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/neurons_kaiyu.hdf"
+image_dataset = "n018/raw"
+label_dataset = "n018/gt/neuron_ids"
+

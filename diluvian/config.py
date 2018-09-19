@@ -347,6 +347,7 @@ class TrainingConfig(BaseConfig):
         self.augment_artifacts = settings.get('augment_artifacts', [])
         self.augment_elastic = bool(settings.get('augment_elastic', False))
         self.augment_permute_channels = bool(settings.get('augment_permute_channels', False))
+        self.augment_density = bool(settings.get('augment_density', False))
 
 
 class PostprocessingConfig(BaseConfig):
