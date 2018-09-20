@@ -1,0 +1,119 @@
+[[dataset]]
+name = "0000"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0000/raw"
+label_dataset = "0000/gt/neuron_ids"
+
+[[dataset]]
+name = "0001"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0001/raw"
+label_dataset = "0001/gt/neuron_ids"
+
+[[dataset]]
+name = "0002"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0002/raw"
+label_dataset = "0002/gt/neuron_ids"
+
+[[dataset]]
+name = "0003"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0003/raw"
+label_dataset = "0003/gt/neuron_ids"
+
+[[dataset]]
+name = "0004"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0004/raw"
+label_dataset = "0004/gt/neuron_ids"
+
+[[dataset]]
+name = "0005"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0005/raw"
+label_dataset = "0005/gt/neuron_ids"
+
+[[dataset]]
+name = "0006"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0006/raw"
+label_dataset = "0006/gt/neuron_ids"
+
+[[dataset]]
+name = "0007"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0007/raw"
+label_dataset = "0007/gt/neuron_ids"
+
+[[dataset]]
+name = "0008"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0008/raw"
+label_dataset = "0008/gt/neuron_ids"
+
+[[dataset]]
+name = "0009"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0009/raw"
+label_dataset = "0009/gt/neuron_ids"
+
+[[dataset]]
+name = "0010"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0010/raw"
+label_dataset = "0010/gt/neuron_ids"
+
+[[dataset]]
+name = "0011"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0011/raw"
+label_dataset = "0011/gt/neuron_ids"
+
+[[dataset]]
+name = "0012"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0012/raw"
+label_dataset = "0012/gt/neuron_ids"
+
+[[dataset]]
+name = "0013"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0013/raw"
+label_dataset = "0013/gt/neuron_ids"
+
+[[dataset]]
+name = "0014"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0014/raw"
+label_dataset = "0014/gt/neuron_ids"
+
+[[dataset]]
+name = "0015"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0015/raw"
+label_dataset = "0015/gt/neuron_ids"
+
+[[dataset]]
+name = "0016"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0016/raw"
+label_dataset = "0016/gt/neuron_ids"
+
+[[dataset]]
+name = "0017"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0017/raw"
+label_dataset = "0017/gt/neuron_ids"
+
+[[dataset]]
+name = "0018"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0018/raw"
+label_dataset = "0018/gt/neuron_ids"
+
+[[dataset]]
+name = "0019"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons_test.hdf"
+image_dataset = "0019/raw"
+label_dataset = "0019/gt/neuron_ids"

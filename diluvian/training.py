@@ -269,8 +269,8 @@ class AugmentVolumeGenerator(Volume):
             image_data = image_data // 2
             image_data = image_data.astype(self.volume.image_data.dtype)
             
-            print('overlayed data')
-            misc.imsave('/groups/kainmueller/home/maisl/neuron_segmentation/overlayed/augm_vol_' + str(datetime.now()) + '.tif', np.max(image_data, axis=0))
+            #print('overlayed data')
+            #misc.imsave('/groups/kainmueller/home/maisl/neuron_segmentation/overlayed/augm_vol_' + str(datetime.now()) + '.tif', np.max(image_data, axis=0))
 
             return Volume(self.volume.resolution, image_data, label_data)
 """
@@ -474,9 +474,11 @@ class MovingTrainingGenerator(six.Iterator):
                 while block_data is None:
                     subvolume = six.next(self.subvolumes)
                     # save subvolume examples
-                    if np.random.sample() < 0.01:
-                        snapshot = np.max(subvolume.image, axis=0)
-                        misc.imsave('/groups/kainmueller/home/maisl/neuron_segmentation/snapshots/subvol_' + str(datetime.now()) + '.tif', snapshot)
+                    if CONFIG.training.save_snapshots != "":
+                        if np.random.sample() < 0.01:
+                            snapshot = np.max(subvolume.image, axis=0)
+                            misc.imsave(CONFIG.training.save_snapshots + '/subvol_' + 
+                                    str(datetime.now()) + '.tif', snapshot)
 
                     self.epoch_subvolumes += 1
                     self.f_as[r] = subvolume.f_a()

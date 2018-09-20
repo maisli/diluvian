@@ -348,6 +348,7 @@ class TrainingConfig(BaseConfig):
         self.augment_elastic = bool(settings.get('augment_elastic', False))
         self.augment_permute_channels = bool(settings.get('augment_permute_channels', False))
         self.augment_density = bool(settings.get('augment_density', False))
+        self.save_snapshots = str(settings.get('save_snapshots', ''))
 
 
 class PostprocessingConfig(BaseConfig):

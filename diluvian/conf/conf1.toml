@@ -58,5 +58,6 @@ augment_permute_channels = true
 augment_density = true
 test_regex = "^(0018|0019)"
 train_regex = "^(?!(0018|0019))"
+save_snapshots = ""
 
 [postprocessing]

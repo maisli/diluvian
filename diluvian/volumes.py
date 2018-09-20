@@ -439,7 +439,7 @@ class DensityAugmentGenerator(SubvolumeAugmentGenerator):
                 found_candidate = True
         
         if found_candidate == False:
-            print('cant find volume to overlay with, returning subv')
+            #print('cant find volume to overlay with, returning subv')
             return subv
         
         candidate_image = candidate.image_data[
@@ -455,7 +455,9 @@ class DensityAugmentGenerator(SubvolumeAugmentGenerator):
         image_data = image_data / 2
         image_data = image_data.astype(subv.image.dtype)
         
-        misc.imsave('/groups/kainmueller/home/maisl/neuron_segmentation/overlayed/augm_vol_' + str(datetime.now()) + '.tif', np.max(image_data, axis=0))
+        if CONFIG.training.save_snapshots != "":
+            misc.imsave(CONFIG.training.save_snapshots + '/overlay_' + 
+                    str(datetime.now()) + '.tif', np.max(image_data, axis=0))
 
         subv = Subvolume(image_data, subv.label_mask, subv.seed, subv.label_id)
         return subv
