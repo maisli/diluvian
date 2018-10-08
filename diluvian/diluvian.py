@@ -341,20 +341,19 @@ def fill_volume_with_model(
                 overlap=np.sum(np.logical_and(
                     prediction[bounds_shape][:,:,:,label_channel] != background_label_id, mask))
                 if overlap == 0:
-                    prediction[bounds_shape][:,:,:,label_channel][mask] = label_id
+                    prediction[bounds_shape][:,:,:,label_channel][mask.astype(bool)] = label_id
                     new_mask = False
                     break
             if new_mask:
                 z,y,x,c = prediction.shape
                 prediction = np.concatenate((prediction, 
                     np.full_like(np.zeros((z,y,x,1)), background_label_id, dtype=int)), axis=3)
-                prediction[bounds_shape][:,:,:,-1][mask] = label_id
+                prediction[bounds_shape][:,:,:,-1][mask.astype(bool)] = label_id
             covered[bounds_shape][np.logical_and(prediction_mask, mask)] = label_id
-
+        
         else:
             prediction[bounds_shape][np.logical_and(prediction_mask, mask)] = label_id
             covered = prediction
-
         label_pbar.set_description('Label {}'.format(label_id))
         label_pbar.update(np.count_nonzero(label_shape))
         logging.info('Filled seed (%s) with %s voxels labeled %s.',
