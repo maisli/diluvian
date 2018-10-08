@@ -677,6 +677,14 @@ def train_network(
         print('CUDA_VISIBLE_DEVICES: ', os.environ['CUDA_VISIBLE_DEVICES'])
         print('CUDA_ROOT: ', os.environ['CUDA_ROOT'])
 
+    import tensorflow as tf
+    from keras.backend.tensorflow_backend import set_session
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
+    config.log_device_placement = True  # to log device placement
+    sess = tf.Session(config=config)
+    set_session(sess)
+
     
     if model_file is None:
         factory = get_function(CONFIG.network.factory)
@@ -740,8 +748,7 @@ def train_network(
     callbacks.append(ModelCheckpoint(model_output_filebase + '.hdf5',
                                      monitor='val_subv_metric',
                                      save_best_only=False,
-                                     mode=validation_mode,
-                                     period=5))
+                                     mode=validation_mode)) #period=5
     if model_checkpoint_file:
         callbacks.append(ModelCheckpoint(model_checkpoint_file))
     callbacks.append(EarlyStopping(monitor='val_subv_metric',

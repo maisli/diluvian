@@ -34,6 +34,7 @@ from .volumes import (
         SubvolumeBounds,
         )
 from .regions import Region
+import pdb
 
 def generate_subvolume_bounds(filename, volumes, num_bounds, sparse=False, moves=None):
     if '{volume}' not in filename:
@@ -80,23 +81,38 @@ def fill_volume_with_model(
 
     #if CONFIG.training.num_gpus > len(assigned_gpus):
     #    num_workers = len(assigned_gpus)
-  
+    overlapping_output = True 
+
+    #combine label volume for prediction as multiple channels are not needed for seed generation
+    if volume.label_data.ndim == 4:
+        volume.label_data = np.sum(volume.label_data > 0, axis=3)
     subvolume = volume.get_subvolume(SubvolumeBounds(start=np.zeros(3, dtype=np.int64), 
         stop=volume.shape), copy_gt_seeds)
     # Create an output label volume.
     if resume_prediction is None:
         prediction = np.full_like(subvolume.image[:,:,:,0], background_label_id, dtype=np.uint64)
+        covered = np.full_like(subvolume.image[:,:,:,0], background_label_id, dtype=np.uint64)
         label_id = 0
     else:
         if resume_prediction.shape != subvolume.image.shape:
             raise ValueError('Resume volume prediction is wrong shape.')
-        prediction = resume_prediction
+        if resume_prediction.ndim == 4:
+            prediction = resume_prediction
+            covered = np.max(resume_prediction, axis=3) #assume background label is smallest
+        else:
+            prediction = resume_prediction
+            covered = resume_prediction
         prediction.flags.writeable = True
         label_id = prediction.max()
+
+    if overlapping_output and prediction.ndim == 3:
+        z,y,x = prediction.shape
+        prediction = np.reshape(prediction, (z,y,x,1))
+
     # Create a conflict count volume that tracks locations where segmented
     # bodies overlap. For now the first body takes precedence in the
     # predicted labels.
-    conflict_count = np.full_like(prediction, 0, dtype=np.uint32)
+    conflict_count = np.full_like(covered, 0, dtype=np.uint32)
 
     def worker(worker_id, set_devices, model_file, image, seeds, results, lock, revoked):
         lock.acquire()
@@ -179,7 +195,7 @@ def fill_volume_with_model(
     else:
         generator = preprocessing.SEED_GENERATORS[seed_generator]
         if seed_generator == 'neuron' or seed_generator == 'neuron_dt':
-            seeds = generator(subvolume.label_image, 15)
+            seeds = generator(subvolume.label_image, 100)
         elif seed_generator == 'sobel':
             seeds = generator(subvolume.image, CONFIG.volume.resolution)
         else:
@@ -189,7 +205,8 @@ def fill_volume_with_model(
         seeds = [s for s in seeds if volume.mask_data[tuple(volume.world_coord_to_local(s))]]
 
     pbar = tqdm(desc='Seed queue', total=len(seeds), miniters=1, smoothing=0.0)
-    label_pbar = tqdm(desc='Labeled vox', total=prediction.size, miniters=1, smoothing=0.0, position=1)
+    label_pbar = tqdm(desc='Labeled vox', total=covered.size, miniters=1, smoothing=0.0, 
+            position=1)
     num_seeds = len(seeds)
     #if shuffle_seeds:
     #    random.shuffle(seeds)
@@ -214,8 +231,7 @@ def fill_volume_with_model(
     def queue_next_seed():
         total = 0
         for seed in seeds:
-            print('prediction shape: ', prediction.shape)
-            if prediction[seed[0], seed[1], seed[2]] != background_label_id:
+            if covered[seed[0], seed[1], seed[2]] != background_label_id:
                 # This seed has already been filled.
                 total += 1
                 continue
@@ -274,7 +290,7 @@ def fill_volume_with_model(
         pbar.set_description('Seed ' + np.array_str(seed))
         pbar.update(processed_seeds)
 
-        if prediction[seed[0], seed[1], seed[2]] != background_label_id:
+        if covered[seed[0], seed[1], seed[2]] != background_label_id:
             # This seed has already been filled.
             logging.debug('Seed (%s) was filled but has been covered in the meantime.',
                           np.array_str(seed))
@@ -310,7 +326,7 @@ def fill_volume_with_model(
 
         logging.debug('Adding body to prediction label volume.')
         bounds_shape = map(slice, bounds[0], bounds[1])
-        prediction_mask = prediction[bounds_shape] == background_label_id
+        prediction_mask = covered[bounds_shape] == background_label_id
         for seed in dispatched_seeds:
             if np.all(bounds[0] <= seed) and np.all(bounds[1] > seed) and mask[tuple(seed - bounds[0])]:
                 loading_lock.acquire()
@@ -319,7 +335,25 @@ def fill_volume_with_model(
                 loading_lock.release()
         conflict_count[bounds_shape][np.logical_and(np.logical_not(prediction_mask), mask)] += 1
         label_shape = np.logical_and(prediction_mask, mask)
-        prediction[bounds_shape][np.logical_and(prediction_mask, mask)] = label_id
+        if overlapping_output:
+            new_mask = True
+            for label_channel in range(prediction.shape[3]):
+                overlap=np.sum(np.logical_and(
+                    prediction[bounds_shape][:,:,:,label_channel] != background_label_id, mask))
+                if overlap == 0:
+                    prediction[bounds_shape][:,:,:,label_channel][mask] = label_id
+                    new_mask = False
+                    break
+            if new_mask:
+                z,y,x,c = prediction.shape
+                prediction = np.concatenate((prediction, 
+                    np.full_like(np.zeros((z,y,x,1)), background_label_id, dtype=int)), axis=3)
+                prediction[bounds_shape][:,:,:,-1][mask] = label_id
+            covered[bounds_shape][np.logical_and(prediction_mask, mask)] = label_id
+
+        else:
+            prediction[bounds_shape][np.logical_and(prediction_mask, mask)] = label_id
+            covered = prediction
 
         label_pbar.set_description('Label {}'.format(label_id))
         label_pbar.update(np.count_nonzero(label_shape))
@@ -371,12 +405,10 @@ def fill_volumes_with_model(
     if resume_filename is not None and '{volume}' not in resume_filename:
         raise ValueError('TOML resume filename must contain "{volume}" for volume name replacement.')
     
-    #from datetime import datetime
     if partition:
         _, volumes = partition_volumes(volumes)
 
     for volume_name, volume in six.iteritems(volumes):
-        #t0 = datetime.now()
         logging.info('Filling volume %s...', volume_name)
         volume = volume.downsample(CONFIG.volume.resolution)
         if resume_filename is not None:
@@ -394,8 +426,6 @@ def fill_volumes_with_model(
                 resume_prediction=resume_prediction,
                 checkpoint_filename=checkpoint_filename,
                 **kwargs)
-        
-        #print('fill ' + volume_name + ' elapsed time (hh:mm:ss.ms) {}'.format(datetime.now() - t0))
         
         if np.max(prediction) <= 255:
             current_type = np.uint8
@@ -438,7 +468,6 @@ def fill_region_with_model(
         assigned_gpus=[]):
     
     import os
-    import pdb
 
     # Only make given GPUs visible to Tensorflow so that it does not allocate
     # all available memory on all devices.

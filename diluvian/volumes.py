@@ -72,10 +72,12 @@ def partition_volumes(volumes, downsample=True):
 
 class SubvolumeBounds(object):
     """Sufficient parameters to extract a subvolume from a volume."""
-    __slots__ = ('start', 'stop', 'seed', 'label_id', 'label_margin',)
+    __slots__ = ('start', 'stop', 'seed', 'label_id', 'label_margin', 'label_channel')
 
-    def __init__(self, start=None, stop=None, seed=None, label_id=None, label_margin=None):
-        assert (start is not None and stop is not None) or seed is not None, "Bounds or seed must be provided"
+    def __init__(self, start=None, stop=None, seed=None, label_id=None, label_margin=None,
+            label_channel=None):
+        assert (start is not None and stop is not None) or seed is not None, \
+                "Bounds or seed must be provided"
         self.start = start
         self.stop = stop
         self.seed = seed
@@ -83,6 +85,7 @@ class SubvolumeBounds(object):
         if label_margin is None:
             label_margin = np.zeros(3, dtype=np.int64)
         self.label_margin = label_margin
+        self.label_channel = label_channel
 
     @classmethod
     def iterable_from_csv(cls, filename):
@@ -138,7 +141,8 @@ class Subvolume(object):
         return np.count_nonzero(self.label_mask) / float(self.label_mask.size)
 
     def has_seed_in_mask(self):
-        ctr = self.seed - (np.asarray(self.image.shape) - np.asarray(self.label_mask.shape)) // 2
+        ctr = self.seed - (np.asarray(self.image.shape) 
+                - np.asarray(self.label_mask.shape)) // 2
         return self.label_mask[tuple(ctr)]
 
     def has_uniform_seed_margin(self, seed_margin=20.0):
@@ -903,11 +907,19 @@ class Volume(object):
         if self.label_data is not None:
             label_start = bounds.start + bounds.label_margin
             label_stop = bounds.stop - bounds.label_margin
+            
+            if self.label_data.ndim == 4 and bounds.label_channel is not None:
+                label_subvol = self.label_data[
+                        label_start[0]:label_stop[0],
+                        label_start[1]:label_stop[1],
+                        label_start[2]:label_stop[2],
+                        bounds.label_channel]
 
-            label_subvol = self.label_data[
-                    label_start[0]:label_stop[0],
-                    label_start[1]:label_stop[1],
-                    label_start[2]:label_stop[2]]
+            elif self.label_data.ndim == 3:
+                label_subvol = self.label_data[
+                        label_start[0]:label_stop[0],
+                        label_start[1]:label_stop[1],
+                        label_start[2]:label_stop[2]]
 
             label_subvol = self.world_mat_to_local(label_subvol)
 
@@ -942,7 +954,7 @@ class Volume(object):
             self.skip_blank_sections = False
             self.active_axes = np.array(self.shape) != 1
             self.ctr_min = self.margin
-            self.ctr_max = (np.array(self.volume.shape) - self.margin - 1).astype(np.int64)
+            self.ctr_max = (np.array(self.volume.shape[0:3]) - self.margin - 1).astype(np.int64)
             if prng_seed is None:
                 self.prng_seed = CONFIG.random_seed
             else:
@@ -991,8 +1003,8 @@ class Volume(object):
                         self.seeds = generator(self.volume.label_data, 30000)
                     else:
                         self.seeds = generator(self.volume.label_data > 0)
-                    self.seeds = [seed for seed in self.seeds if np.all(seed >= self.ctr_min) 
-                            and np.all(seed <= self.ctr_max)]
+                    self.seeds = [seed for seed in self.seeds if np.all(
+                        seed[0:3] >= self.ctr_min) and np.all(seed[0:3] <= self.ctr_max)]
                     if len(self.seeds) == 0:
                         raise ValueError('Cannot generate subvolume seeds for seed generator' +
                                 '({})'.format(self.seed_generator))
@@ -1013,6 +1025,11 @@ class Volume(object):
                     current_seed = self.random.randint(0, len(self.seeds))
                     ctr = self.seeds[current_seed].astype(np.int64)
                 
+                label_channel = None
+                if len(ctr) == 4:
+                    label_channel = ctr[3]
+                    ctr = ctr[0:3]
+
                 start = ctr - self.margin
                 stop = ctr + self.margin + np.mod(self.shape, 2).astype(np.int64)
 
@@ -1036,10 +1053,18 @@ class Volume(object):
                     break
                 seed_min = self.volume.world_coord_to_local(ctr)
                 seed_max = self.volume.world_coord_to_local(ctr + 1)
-                label_ids = self.volume.label_data[
-                        seed_min[0]:seed_max[0],
-                        seed_min[1]:seed_max[1],
-                        seed_min[2]:seed_max[2]]
+                if label_channel is None:
+                    label_ids = self.volume.label_data[
+                            seed_min[0]:seed_max[0],
+                            seed_min[1]:seed_max[1],
+                            seed_min[2]:seed_max[2]]
+                else:
+                    label_ids = self.volume.label_data[
+                            seed_min[0]:seed_max[0],
+                            seed_min[1]:seed_max[1],
+                            seed_min[2]:seed_max[2], 
+                            label_channel]
+                    
                 if (label_ids == label_ids.item(0)).all():
                     label_id = label_ids.item(0)
                     if label_id != 0:
@@ -1050,7 +1075,7 @@ class Volume(object):
                             break
 
             return SubvolumeBounds(start, stop, label_id=label_id, 
-                    label_margin=self.label_margin)
+                    label_margin=self.label_margin, label_channel=label_channel)
 
 
 class NdarrayVolume(Volume):
