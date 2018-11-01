@@ -296,15 +296,58 @@ def neuron_dt_seeds(image_data, seed_num):
     
     seeds = []
     image_data = np.asarray(image_data)
-    thresh = image_data > 0
-    transform = ndimage.distance_transform_cdt(thresh)
-    seeds = peak_local_max(transform, exclude_border=0, min_distance=20)
-    #skmax = extrema.local_maxima(transform)
+    # take seeds uniformly from labels
+    labels = np.unique(image_data)
+    labels = np.delete(labels, 0)
+    for label in labels:
+        thresh = image_data == label
+        #thresh = image_data > 0
+        transform = ndimage.distance_transform_cdt(thresh)
+        seeds_per_label = peak_local_max(transform, exclude_border=0, min_distance=20)
+        if seed_num/len(labels) < len(seeds_per_label):
+            idx = np.random.choice(len(seeds_per_label), int(seed_num / len(labels)), 
+                    replace=True)
+            seeds_per_label = seeds_per_label[idx]
+        if seeds == []:
+            seeds = seeds_per_label
+        else:
+            seeds = np.concatenate((seeds, seeds_per_label), axis=0) 
+    
+    return seeds
+
+
+def neuron_raw_dt_seeds(image_data, seed_num):
+
+    from skimage import filters
+    from skimage.feature import peak_local_max
+    #from scipy import misc
+
+    seeds = None
+    if image_data.ndim == 4:
+        for i in range(image_data.shape[3]):
+            image_channel = image_data[:,:,:,i]
+            # otsu thresholding
+            thresh = image_channel > filters.threshold_otsu(image_channel)
+            thresh_image = thresh.copy().astype('uint8') * 255
+            #misc.imsave('/home/maisl/workspace/neuron_segmentation/output/040200/fragments_from_raw_seeds/thresh_' + str(i) + '.tif', np.max(thresh_image,axis=0))
+            transform = ndimage.distance_transform_cdt(thresh)
+            if seeds is None:
+                seeds = peak_local_max(transform, exclude_border=0, min_distance=20)
+                seeds = seeds[np.random.choice(len(seeds), int(seed_num/3), replace=True)]
+            else:
+                cseeds = peak_local_max(transform, exclude_border=0, min_distance=20)
+                cseeds = cseeds[np.random.choice(len(cseeds), int(seed_num/3), replace=True)]
+                seeds = np.concatenate((seeds, cseeds), axis=0)
+    else:
+        thresh = image_data > filters.threshold_otsu(image_data)
+        transform = ndimage.distance_transform_cdt(thresh)
+        seeds = peak_local_max(transform, exclude_border=0, min_distance=20)
+
 
     if seed_num < len(seeds):
         idx = np.random.choice(len(seeds), seed_num, replace=True)
         seeds = seeds[idx]
-    
+
     return seeds
 
 
@@ -346,5 +389,6 @@ SEED_GENERATORS = {
     'cell_interior': cell_interior_seeds,
     'few_membrane': few_membrane_seeds,
     'neuron': neuron_seeds,
-    'neuron_dt': neuron_dt_seeds
+    'neuron_dt': neuron_dt_seeds,
+    'neuron_raw_dt': neuron_raw_dt_seeds
 }

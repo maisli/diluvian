@@ -92,7 +92,7 @@ def _make_main_parser():
     train_parser.add_argument(
             '--seed-generator', dest='seed_generator', default='cell_interior', nargs='?',
             choices=['grid', 'sobel', 'membrane', 'distance_transform', 'local_minima', 
-                'cell_interior', 'neuron', 'neuron_dt'],
+                'cell_interior', 'neuron', 'neuron_dt', 'neuron_raw_dt'],
             help='Method to generate seed locations for flood filling.')
     train_parser.add_argument(
             '--load-mask', action='store_true', dest='load_mask', default=False,
@@ -136,7 +136,7 @@ def _make_main_parser():
             # Would be nice to pull these from .preprocessing.SEED_GENERATORS,
             # but want to avoid importing so that CLI is responsive.
             choices=['grid', 'sobel', 'distance_transform', 'membrane', 'cell_interior', 
-                'local_minima', 'few_membrane', 'neuron', 'neuron_dt'],
+                'local_minima', 'few_membrane', 'neuron', 'neuron_dt', 'neuron_raw_dt'],
             help='Method to generate seed locations for flood filling.')
     fill_parser.add_argument(
             '--load-seeds', action='store_true', dest='load_seeds', default=False,
@@ -197,7 +197,7 @@ def _make_main_parser():
             # Would be nice to pull these from .preprocessing.SEED_GENERATORS,
             # but want to avoid importing so that CLI is responsive.
             choices=['grid', 'sobel', 'distance_transform', 'membrane', 'cell_interior', 
-                'local_minima', 'few_membrane', 'neuron', 'neuron_dt'],
+                'local_minima', 'few_membrane', 'neuron', 'neuron_dt', 'neuron_raw_dt'],
             help='Method to generate seed locations for flood filling.')
 
     validate_parser = commandparsers.add_parser(  # noqa

@@ -34,6 +34,7 @@ from .volumes import (
         SubvolumeBounds,
         )
 from .regions import Region
+from scipy import misc
 import pdb
 
 def generate_subvolume_bounds(filename, volumes, num_bounds, sparse=False, moves=None):
@@ -62,6 +63,7 @@ def fill_volume_with_model(
         volume,
         resume_prediction=None,
         checkpoint_filename=None,
+        volume_filename=None,
         checkpoint_label_interval=20,
         seed_generator='sobel',
         background_label_id=0,
@@ -195,7 +197,13 @@ def fill_volume_with_model(
     else:
         generator = preprocessing.SEED_GENERATORS[seed_generator]
         if seed_generator == 'neuron' or seed_generator == 'neuron_dt':
-            seeds = generator(subvolume.label_image, 100)
+            seeds = generator(subvolume.label_image, 200)
+        elif seed_generator == 'neuron_raw_dt':
+            seeds = generator(subvolume.image, 300)
+            raw_copy = subvolume.image.copy() * 255
+            for seed in seeds:
+                raw_copy[seed[0], seed[1], seed[2],:] = [255,255,255]
+            misc.imsave(volume_filename + '_seeds.tif', np.max(raw_copy, axis=0).astype('uint8'))
         elif seed_generator == 'sobel':
             seeds = generator(subvolume.image, CONFIG.volume.resolution)
         else:
@@ -314,6 +322,7 @@ def fill_volume_with_model(
             mask, bounds = body._get_bounded_mask()
 
         body_size = np.count_nonzero(mask)
+        print('body size: ', body_size)
 
         if body_size == 0:
             logging.debug('Body was empty.')
@@ -424,6 +433,7 @@ def fill_volumes_with_model(
                 volume,
                 resume_prediction=resume_prediction,
                 checkpoint_filename=checkpoint_filename,
+                volume_filename=volume_filename,
                 **kwargs)
         
         if np.max(prediction) <= 255:
@@ -440,7 +450,8 @@ def fill_volumes_with_model(
             tomlfile.write('# Filling kwargs: {}\n'.format(str(kwargs)))
             tomlfile.write(str(toml.dumps({'dataset': [config]})))
         print('file written')
-
+        # todo export labeled mip
+        print('prediction > 0: ', np.sum(prediction>0))
         if viewer:
             viewer = WrappedViewer(voxel_size=list(np.flipud(CONFIG.volume.resolution)))
             subvolume = volume.get_subvolume(SubvolumeBounds(start=np.zeros(3, dtype=np.int64), stop=volume.shape))
