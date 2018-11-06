@@ -480,6 +480,14 @@ class MovingTrainingGenerator(six.Iterator):
                             misc.imsave(CONFIG.training.save_snapshots + '/subvol_' + 
                                     str(datetime.now()) + '.tif', snapshot)
 
+                    if CONFIG.training.save_gt_snapshots != "":
+                        if np.random.sample() < 0.01:
+                            snapshot = np.max(subvolume.label_mask, axis=0)
+                            plt.imshow(snapshot)
+                            plt.savefig(CONFIG.training.save_gt_snapshots + '/subvol_' + 
+                                    str(datetime.now()) + '.tif')
+
+
                     self.epoch_subvolumes += 1
                     self.f_as[r] = subvolume.f_a()
 

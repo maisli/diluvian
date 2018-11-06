@@ -100,6 +100,7 @@ class ModelConfig(BaseConfig):
         self.move_check_thickness = int(settings.get('move_check_thickness', 1))
         self.move_priority = str(settings.get('move_priority', 'descending'))
         self.move_recheck = bool(settings.get('move_recheck', True))
+        self.move_exact = bool(settings.get('move_exact', False))
         self.training_subv_shape = np.array(settings.get('training_subv_shape',
                                                          self.input_fov_shape + self.move_step * 2))
         self.validation_subv_shape = np.array(settings.get('validation_subv_shape',
@@ -349,6 +350,10 @@ class TrainingConfig(BaseConfig):
         self.augment_permute_channels = bool(settings.get('augment_permute_channels', False))
         self.augment_density = bool(settings.get('augment_density', False))
         self.save_snapshots = str(settings.get('save_snapshots', ''))
+        self.save_gt_snapshots = str(settings.get('save_gt_snapshots', ''))
+        self.train_distance_transform = bool(settings.get('train_distance_transform', False))
+        self.distance_transform_scaling = int(np.array(settings.get(
+            'distance_transform_scaling', 3)))
 
 
 class PostprocessingConfig(BaseConfig):
@@ -392,6 +397,7 @@ class Config(object):
         self.postprocessing = PostprocessingConfig(settings.get('postprocessing', {}))
 
         self.random_seed = int(settings.get('random_seed', 0))
+        self.make_mask_video = bool(settings.get('make_mask_video', False))
 
     def __str__(self):
         sanitized = {}

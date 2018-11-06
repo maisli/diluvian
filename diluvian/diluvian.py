@@ -116,7 +116,8 @@ def fill_volume_with_model(
     # predicted labels.
     conflict_count = np.full_like(covered, 0, dtype=np.uint32)
 
-    def worker(worker_id, set_devices, model_file, image, seeds, results, lock, revoked):
+    def worker(worker_id, set_devices, model_file, image, seeds, results, lock, revoked,
+            volume_filename):
         lock.acquire()
         import tensorflow as tf
 
@@ -168,7 +169,8 @@ def fill_volume_with_model(
             # Flood-fill and get resulting mask.
             # Allow reading outside the image volume bounds to allow segmentation
             # to fill all the way to the boundary.
-            region = Region(image, seed_vox=seed, sparse_mask=True, block_padding='reflect')
+            region = Region(image, seed_vox=seed, sparse_mask=False, block_padding='reflect',
+                    volume_filename=volume_filename)
             region.bias_against_merge = bias
             early_termination = False
             try:
@@ -188,7 +190,7 @@ def fill_volume_with_model(
             else:
                 body = region.to_body()
             logging.debug('Worker %s: seed %s filled', worker_id, np.array_str(seed))
-
+            
             results.put((seed, body))
 
     # Generate seeds from volume.
@@ -208,6 +210,10 @@ def fill_volume_with_model(
             seeds = generator(subvolume.image, CONFIG.volume.resolution)
         else:
             seeds = generator(subvolume.image)
+
+    print('nb seeds: ', len(seeds))
+    if CONFIG.make_mask_video:
+        seeds = seeds[0:10] 
 
     if filter_seeds_by_mask and volume.mask_data is not None:
         seeds = [s for s in seeds if volume.mask_data[tuple(volume.world_coord_to_local(s))]]
@@ -266,7 +272,7 @@ def fill_volume_with_model(
     loading_lock = manager.Lock()
     for worker_id in range(num_workers):
         w = Process(target=worker, args=(worker_id, set_devices, model_file, subvolume.image,
-                                         seed_queue, results_queue, loading_lock, revoked_seeds))
+            seed_queue, results_queue, loading_lock, revoked_seeds, volume_filename))
         w.start()
         workers.append(w)
 
@@ -536,7 +542,8 @@ def fill_region_with_model(
                     progress=True,
                     move_batch_size=move_batch_size,
                     max_moves=max_moves,
-                    remask_interval=remask_interval))
+                    remask_interval=remask_interval,
+                    filename=volume_filename))
         except (StopIteration, Region.EarlyFillTermination):
             pass
         body = region.to_body()

@@ -1,1026 +1,1026 @@
 [[dataset]]
 name = "0000"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0000/raw"
 label_dataset = "0000/gt/neuron_ids"
 
 [[dataset]]
 name = "0001"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0001/raw"
 label_dataset = "0001/gt/neuron_ids"
 
 [[dataset]]
 name = "0002"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0002/raw"
 label_dataset = "0002/gt/neuron_ids"
 
 [[dataset]]
 name = "0003"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0003/raw"
 label_dataset = "0003/gt/neuron_ids"
 
 [[dataset]]
 name = "0004"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0004/raw"
 label_dataset = "0004/gt/neuron_ids"
 
 [[dataset]]
 name = "0005"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0005/raw"
 label_dataset = "0005/gt/neuron_ids"
 
 [[dataset]]
 name = "0006"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0006/raw"
 label_dataset = "0006/gt/neuron_ids"
 
 [[dataset]]
 name = "0007"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0007/raw"
 label_dataset = "0007/gt/neuron_ids"
 
 [[dataset]]
 name = "0008"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0008/raw"
 label_dataset = "0008/gt/neuron_ids"
 
 [[dataset]]
 name = "0009"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0009/raw"
 label_dataset = "0009/gt/neuron_ids"
 
 [[dataset]]
 name = "0010"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0010/raw"
 label_dataset = "0010/gt/neuron_ids"
 
 [[dataset]]
 name = "0011"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0011/raw"
 label_dataset = "0011/gt/neuron_ids"
 
 [[dataset]]
 name = "0012"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0012/raw"
 label_dataset = "0012/gt/neuron_ids"
 
 [[dataset]]
 name = "0013"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0013/raw"
 label_dataset = "0013/gt/neuron_ids"
 
 [[dataset]]
 name = "0014"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0014/raw"
 label_dataset = "0014/gt/neuron_ids"
 
 [[dataset]]
 name = "0015"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0015/raw"
 label_dataset = "0015/gt/neuron_ids"
 
 [[dataset]]
 name = "0016"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0016/raw"
 label_dataset = "0016/gt/neuron_ids"
 
 [[dataset]]
 name = "0017"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0017/raw"
 label_dataset = "0017/gt/neuron_ids"
 
 [[dataset]]
 name = "0018"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0018/raw"
 label_dataset = "0018/gt/neuron_ids"
 
 [[dataset]]
 name = "0019"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0019/raw"
 label_dataset = "0019/gt/neuron_ids"
 
 [[dataset]]
 name = "0020"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0020/raw"
 label_dataset = "0020/gt/neuron_ids"
 
 [[dataset]]
 name = "0021"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0021/raw"
 label_dataset = "0021/gt/neuron_ids"
 
 [[dataset]]
 name = "0022"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0022/raw"
 label_dataset = "0022/gt/neuron_ids"
 
 [[dataset]]
 name = "0023"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0023/raw"
 label_dataset = "0023/gt/neuron_ids"
 
 [[dataset]]
 name = "0024"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0024/raw"
 label_dataset = "0024/gt/neuron_ids"
 
 [[dataset]]
 name = "0025"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0025/raw"
 label_dataset = "0025/gt/neuron_ids"
 
 [[dataset]]
 name = "0026"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0026/raw"
 label_dataset = "0026/gt/neuron_ids"
 
 [[dataset]]
 name = "0027"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0027/raw"
 label_dataset = "0027/gt/neuron_ids"
 
 [[dataset]]
 name = "0028"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0028/raw"
 label_dataset = "0028/gt/neuron_ids"
 
 [[dataset]]
 name = "0029"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0029/raw"
 label_dataset = "0029/gt/neuron_ids"
 
 [[dataset]]
 name = "0030"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0030/raw"
 label_dataset = "0030/gt/neuron_ids"
 
 [[dataset]]
 name = "0031"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0031/raw"
 label_dataset = "0031/gt/neuron_ids"
 
 [[dataset]]
 name = "0032"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0032/raw"
 label_dataset = "0032/gt/neuron_ids"
 
 [[dataset]]
 name = "0033"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0033/raw"
 label_dataset = "0033/gt/neuron_ids"
 
 [[dataset]]
 name = "0034"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0034/raw"
 label_dataset = "0034/gt/neuron_ids"
 
 [[dataset]]
 name = "0035"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0035/raw"
 label_dataset = "0035/gt/neuron_ids"
 
 [[dataset]]
 name = "0036"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0036/raw"
 label_dataset = "0036/gt/neuron_ids"
 
 [[dataset]]
 name = "0037"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0037/raw"
 label_dataset = "0037/gt/neuron_ids"
 
 [[dataset]]
 name = "0038"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0038/raw"
 label_dataset = "0038/gt/neuron_ids"
 
 [[dataset]]
 name = "0039"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0039/raw"
 label_dataset = "0039/gt/neuron_ids"
 
 [[dataset]]
 name = "0040"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0040/raw"
 label_dataset = "0040/gt/neuron_ids"
 
 [[dataset]]
 name = "0041"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0041/raw"
 label_dataset = "0041/gt/neuron_ids"
 
 [[dataset]]
 name = "0042"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0042/raw"
 label_dataset = "0042/gt/neuron_ids"
 
 [[dataset]]
 name = "0043"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0043/raw"
 label_dataset = "0043/gt/neuron_ids"
 
 [[dataset]]
 name = "0044"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0044/raw"
 label_dataset = "0044/gt/neuron_ids"
 
 [[dataset]]
 name = "0045"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0045/raw"
 label_dataset = "0045/gt/neuron_ids"
 
 [[dataset]]
 name = "0046"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0046/raw"
 label_dataset = "0046/gt/neuron_ids"
 
 [[dataset]]
 name = "0047"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0047/raw"
 label_dataset = "0047/gt/neuron_ids"
 
 [[dataset]]
 name = "0048"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0048/raw"
 label_dataset = "0048/gt/neuron_ids"
 
 [[dataset]]
 name = "0049"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0049/raw"
 label_dataset = "0049/gt/neuron_ids"
 
 [[dataset]]
 name = "0050"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0050/raw"
 label_dataset = "0050/gt/neuron_ids"
 
 [[dataset]]
 name = "0051"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0051/raw"
 label_dataset = "0051/gt/neuron_ids"
 
 [[dataset]]
 name = "0052"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0052/raw"
 label_dataset = "0052/gt/neuron_ids"
 
 [[dataset]]
 name = "0053"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0053/raw"
 label_dataset = "0053/gt/neuron_ids"
 
 [[dataset]]
 name = "0054"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0054/raw"
 label_dataset = "0054/gt/neuron_ids"
 
 [[dataset]]
 name = "0055"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0055/raw"
 label_dataset = "0055/gt/neuron_ids"
 
 [[dataset]]
 name = "0056"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0056/raw"
 label_dataset = "0056/gt/neuron_ids"
 
 [[dataset]]
 name = "0057"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0057/raw"
 label_dataset = "0057/gt/neuron_ids"
 
 [[dataset]]
 name = "0058"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0058/raw"
 label_dataset = "0058/gt/neuron_ids"
 
 [[dataset]]
 name = "0059"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0059/raw"
 label_dataset = "0059/gt/neuron_ids"
 
 [[dataset]]
 name = "0060"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0060/raw"
 label_dataset = "0060/gt/neuron_ids"
 
 [[dataset]]
 name = "0061"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0061/raw"
 label_dataset = "0061/gt/neuron_ids"
 
 [[dataset]]
 name = "0062"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0062/raw"
 label_dataset = "0062/gt/neuron_ids"
 
 [[dataset]]
 name = "0063"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0063/raw"
 label_dataset = "0063/gt/neuron_ids"
 
 [[dataset]]
 name = "0064"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0064/raw"
 label_dataset = "0064/gt/neuron_ids"
 
 [[dataset]]
 name = "0065"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0065/raw"
 label_dataset = "0065/gt/neuron_ids"
 
 [[dataset]]
 name = "0066"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0066/raw"
 label_dataset = "0066/gt/neuron_ids"
 
 [[dataset]]
 name = "0067"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0067/raw"
 label_dataset = "0067/gt/neuron_ids"
 
 [[dataset]]
 name = "0068"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0068/raw"
 label_dataset = "0068/gt/neuron_ids"
 
 [[dataset]]
 name = "0069"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0069/raw"
 label_dataset = "0069/gt/neuron_ids"
 
 [[dataset]]
 name = "0070"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0070/raw"
 label_dataset = "0070/gt/neuron_ids"
 
 [[dataset]]
 name = "0071"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0071/raw"
 label_dataset = "0071/gt/neuron_ids"
 
 [[dataset]]
 name = "0072"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0072/raw"
 label_dataset = "0072/gt/neuron_ids"
 
 [[dataset]]
 name = "0073"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0073/raw"
 label_dataset = "0073/gt/neuron_ids"
 
 [[dataset]]
 name = "0074"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0074/raw"
 label_dataset = "0074/gt/neuron_ids"
 
 [[dataset]]
 name = "0075"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0075/raw"
 label_dataset = "0075/gt/neuron_ids"
 
 [[dataset]]
 name = "0076"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0076/raw"
 label_dataset = "0076/gt/neuron_ids"
 
 [[dataset]]
 name = "0077"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0077/raw"
 label_dataset = "0077/gt/neuron_ids"
 
 [[dataset]]
 name = "0078"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0078/raw"
 label_dataset = "0078/gt/neuron_ids"
 
 [[dataset]]
 name = "0079"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0079/raw"
 label_dataset = "0079/gt/neuron_ids"
 
 [[dataset]]
 name = "0080"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0080/raw"
 label_dataset = "0080/gt/neuron_ids"
 
 [[dataset]]
 name = "0081"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0081/raw"
 label_dataset = "0081/gt/neuron_ids"
 
 [[dataset]]
 name = "0082"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0082/raw"
 label_dataset = "0082/gt/neuron_ids"
 
 [[dataset]]
 name = "0083"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0083/raw"
 label_dataset = "0083/gt/neuron_ids"
 
 [[dataset]]
 name = "0084"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0084/raw"
 label_dataset = "0084/gt/neuron_ids"
 
 [[dataset]]
 name = "0085"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0085/raw"
 label_dataset = "0085/gt/neuron_ids"
 
 [[dataset]]
 name = "0086"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0086/raw"
 label_dataset = "0086/gt/neuron_ids"
 
 [[dataset]]
 name = "0087"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0087/raw"
 label_dataset = "0087/gt/neuron_ids"
 
 [[dataset]]
 name = "0088"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0088/raw"
 label_dataset = "0088/gt/neuron_ids"
 
 [[dataset]]
 name = "0089"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0089/raw"
 label_dataset = "0089/gt/neuron_ids"
 
 [[dataset]]
 name = "0090"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0090/raw"
 label_dataset = "0090/gt/neuron_ids"
 
 [[dataset]]
 name = "0091"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0091/raw"
 label_dataset = "0091/gt/neuron_ids"
 
 [[dataset]]
 name = "0092"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0092/raw"
 label_dataset = "0092/gt/neuron_ids"
 
 [[dataset]]
 name = "0093"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0093/raw"
 label_dataset = "0093/gt/neuron_ids"
 
 [[dataset]]
 name = "0094"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0094/raw"
 label_dataset = "0094/gt/neuron_ids"
 
 [[dataset]]
 name = "0095"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0095/raw"
 label_dataset = "0095/gt/neuron_ids"
 
 [[dataset]]
 name = "0096"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0096/raw"
 label_dataset = "0096/gt/neuron_ids"
 
 [[dataset]]
 name = "0097"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0097/raw"
 label_dataset = "0097/gt/neuron_ids"
 
 [[dataset]]
 name = "0098"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0098/raw"
 label_dataset = "0098/gt/neuron_ids"
 
 [[dataset]]
 name = "0099"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0099/raw"
 label_dataset = "0099/gt/neuron_ids"
 
 [[dataset]]
 name = "0100"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0100/raw"
 label_dataset = "0100/gt/neuron_ids"
 
 [[dataset]]
 name = "0101"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0101/raw"
 label_dataset = "0101/gt/neuron_ids"
 
 [[dataset]]
 name = "0102"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0102/raw"
 label_dataset = "0102/gt/neuron_ids"
 
 [[dataset]]
 name = "0103"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0103/raw"
 label_dataset = "0103/gt/neuron_ids"
 
 [[dataset]]
 name = "0104"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0104/raw"
 label_dataset = "0104/gt/neuron_ids"
 
 [[dataset]]
 name = "0105"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0105/raw"
 label_dataset = "0105/gt/neuron_ids"
 
 [[dataset]]
 name = "0106"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0106/raw"
 label_dataset = "0106/gt/neuron_ids"
 
 [[dataset]]
 name = "0107"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0107/raw"
 label_dataset = "0107/gt/neuron_ids"
 
 [[dataset]]
 name = "0108"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0108/raw"
 label_dataset = "0108/gt/neuron_ids"
 
 [[dataset]]
 name = "0109"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0109/raw"
 label_dataset = "0109/gt/neuron_ids"
 
 [[dataset]]
 name = "0110"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0110/raw"
 label_dataset = "0110/gt/neuron_ids"
 
 [[dataset]]
 name = "0111"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0111/raw"
 label_dataset = "0111/gt/neuron_ids"
 
 [[dataset]]
 name = "0112"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0112/raw"
 label_dataset = "0112/gt/neuron_ids"
 
 [[dataset]]
 name = "0113"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0113/raw"
 label_dataset = "0113/gt/neuron_ids"
 
 [[dataset]]
 name = "0114"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0114/raw"
 label_dataset = "0114/gt/neuron_ids"
 
 [[dataset]]
 name = "0115"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0115/raw"
 label_dataset = "0115/gt/neuron_ids"
 
 [[dataset]]
 name = "0116"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0116/raw"
 label_dataset = "0116/gt/neuron_ids"
 
 [[dataset]]
 name = "0117"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0117/raw"
 label_dataset = "0117/gt/neuron_ids"
 
 [[dataset]]
 name = "0118"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0118/raw"
 label_dataset = "0118/gt/neuron_ids"
 
 [[dataset]]
 name = "0119"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0119/raw"
 label_dataset = "0119/gt/neuron_ids"
 
 [[dataset]]
 name = "0120"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0120/raw"
 label_dataset = "0120/gt/neuron_ids"
 
 [[dataset]]
 name = "0121"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0121/raw"
 label_dataset = "0121/gt/neuron_ids"
 
 [[dataset]]
 name = "0122"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0122/raw"
 label_dataset = "0122/gt/neuron_ids"
 
 [[dataset]]
 name = "0123"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0123/raw"
 label_dataset = "0123/gt/neuron_ids"
 
 [[dataset]]
 name = "0124"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0124/raw"
 label_dataset = "0124/gt/neuron_ids"
 
 [[dataset]]
 name = "0125"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0125/raw"
 label_dataset = "0125/gt/neuron_ids"
 
 [[dataset]]
 name = "0126"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0126/raw"
 label_dataset = "0126/gt/neuron_ids"
 
 [[dataset]]
 name = "0127"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0127/raw"
 label_dataset = "0127/gt/neuron_ids"
 
 [[dataset]]
 name = "0128"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0128/raw"
 label_dataset = "0128/gt/neuron_ids"
 
 [[dataset]]
 name = "0129"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0129/raw"
 label_dataset = "0129/gt/neuron_ids"
 
 [[dataset]]
 name = "0130"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0130/raw"
 label_dataset = "0130/gt/neuron_ids"
 
 [[dataset]]
 name = "0131"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0131/raw"
 label_dataset = "0131/gt/neuron_ids"
 
 [[dataset]]
 name = "0132"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0132/raw"
 label_dataset = "0132/gt/neuron_ids"
 
 [[dataset]]
 name = "0133"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0133/raw"
 label_dataset = "0133/gt/neuron_ids"
 
 [[dataset]]
 name = "0134"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0134/raw"
 label_dataset = "0134/gt/neuron_ids"
 
 [[dataset]]
 name = "0135"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0135/raw"
 label_dataset = "0135/gt/neuron_ids"
 
 [[dataset]]
 name = "0136"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0136/raw"
 label_dataset = "0136/gt/neuron_ids"
 
 [[dataset]]
 name = "0137"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0137/raw"
 label_dataset = "0137/gt/neuron_ids"
 
 [[dataset]]
 name = "0138"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0138/raw"
 label_dataset = "0138/gt/neuron_ids"
 
 [[dataset]]
 name = "0139"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0139/raw"
 label_dataset = "0139/gt/neuron_ids"
 
 [[dataset]]
 name = "0140"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0140/raw"
 label_dataset = "0140/gt/neuron_ids"
 
 [[dataset]]
 name = "0141"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0141/raw"
 label_dataset = "0141/gt/neuron_ids"
 
 [[dataset]]
 name = "0142"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0142/raw"
 label_dataset = "0142/gt/neuron_ids"
 
 [[dataset]]
 name = "0143"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0143/raw"
 label_dataset = "0143/gt/neuron_ids"
 
 [[dataset]]
 name = "0144"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0144/raw"
 label_dataset = "0144/gt/neuron_ids"
 
 [[dataset]]
 name = "0145"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0145/raw"
 label_dataset = "0145/gt/neuron_ids"
 
 [[dataset]]
 name = "0146"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0146/raw"
 label_dataset = "0146/gt/neuron_ids"
 
 [[dataset]]
 name = "0147"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0147/raw"
 label_dataset = "0147/gt/neuron_ids"
 
 [[dataset]]
 name = "0148"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0148/raw"
 label_dataset = "0148/gt/neuron_ids"
 
 [[dataset]]
 name = "0149"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0149/raw"
 label_dataset = "0149/gt/neuron_ids"
 
 [[dataset]]
 name = "0150"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0150/raw"
 label_dataset = "0150/gt/neuron_ids"
 
 [[dataset]]
 name = "0151"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0151/raw"
 label_dataset = "0151/gt/neuron_ids"
 
 [[dataset]]
 name = "0152"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0152/raw"
 label_dataset = "0152/gt/neuron_ids"
 
 [[dataset]]
 name = "0153"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0153/raw"
 label_dataset = "0153/gt/neuron_ids"
 
 [[dataset]]
 name = "0154"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0154/raw"
 label_dataset = "0154/gt/neuron_ids"
 
 [[dataset]]
 name = "0155"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0155/raw"
 label_dataset = "0155/gt/neuron_ids"
 
 [[dataset]]
 name = "0156"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0156/raw"
 label_dataset = "0156/gt/neuron_ids"
 
 [[dataset]]
 name = "0157"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0157/raw"
 label_dataset = "0157/gt/neuron_ids"
 
 [[dataset]]
 name = "0158"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0158/raw"
 label_dataset = "0158/gt/neuron_ids"
 
 [[dataset]]
 name = "0159"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0159/raw"
 label_dataset = "0159/gt/neuron_ids"
 
 [[dataset]]
 name = "0160"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0160/raw"
 label_dataset = "0160/gt/neuron_ids"
 
 [[dataset]]
 name = "0161"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0161/raw"
 label_dataset = "0161/gt/neuron_ids"
 
 [[dataset]]
 name = "0162"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0162/raw"
 label_dataset = "0162/gt/neuron_ids"
 
 [[dataset]]
 name = "0163"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0163/raw"
 label_dataset = "0163/gt/neuron_ids"
 
 [[dataset]]
 name = "0164"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0164/raw"
 label_dataset = "0164/gt/neuron_ids"
 
 [[dataset]]
 name = "0165"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0165/raw"
 label_dataset = "0165/gt/neuron_ids"
 
 [[dataset]]
 name = "0166"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0166/raw"
 label_dataset = "0166/gt/neuron_ids"
 
 [[dataset]]
 name = "0167"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0167/raw"
 label_dataset = "0167/gt/neuron_ids"
 
 [[dataset]]
 name = "0168"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0168/raw"
 label_dataset = "0168/gt/neuron_ids"
 
 [[dataset]]
 name = "0169"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0169/raw"
 label_dataset = "0169/gt/neuron_ids"
 
 [[dataset]]
 name = "0170"
-hdf5_file = "/groups/kainmueller/home/maisl/data/neurons/perfect_neurons.hdf"
+hdf5_file = "/home/maisl/data/neurons/perfect_neurons.hdf"
 image_dataset = "0170/raw"
 label_dataset = "0170/gt/neuron_ids"
 

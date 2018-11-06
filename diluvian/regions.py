@@ -86,12 +86,13 @@ class Region(object):
         return itertools.imap(lambda v: Region.from_subvolume(v, **kwargs), subvolumes)
 
     def __init__(self, image, target=None, seed_vox=None, mask=None, 
-            sparse_mask=False, block_padding=None):
+            sparse_mask=False, block_padding=None, volume_filename=''):
         self.block_padding = block_padding
         self.MOVE_DELTA = CONFIG.model.move_step
         self.queue = queue.PriorityQueue()
         self.visited = set()
         self.image = image
+        self.volume_filename=volume_filename
         self.bounds = np.array(image.shape[0:-1], dtype=np.int64)
         self.active_axes = np.array(self.bounds) != 1
         if seed_vox is None:
@@ -143,8 +144,12 @@ class Region(object):
         self.seed_vox = self.pos_to_vox(seed_pos)
         if self.target is not None:
             self.target_offset = (self.bounds - self.target.shape) // 2
-            assert np.isclose(self.target[tuple(self.seed_vox - self.target_offset)], 
-                    CONFIG.model.v_true), 'Seed position should be in target body.'
+            if CONFIG.training.train_distance_transform:
+                assert np.greater(self.target[tuple(self.seed_vox - self.target_offset)], 
+                        CONFIG.model.v_true), 'Seed position should be in target body.'
+            else:
+                assert np.isclose(self.target[tuple(self.seed_vox - self.target_offset)], 
+                        CONFIG.model.v_true), 'Seed position should be in target body.'
         self.mask[tuple(self.seed_vox)] = CONFIG.model.v_true
         self.visited.add(tuple(self.seed_pos))
 
@@ -169,6 +174,10 @@ class Region(object):
             hard_mask = self.mask.map_copy(np.bool, threshold, threshold)
         else:
             hard_mask = threshold(self.mask)
+            if CONFIG.make_mask_video:
+                mip = np.nanmax(hard_mask, 0)
+                mip = np.floor(mip*255).astype('uint8')
+                misc.imsave(self.volume_filename + '_hard_mask.tif', mip)
 
         return Body(hard_mask, self.pos_to_vox(self.seed_pos))
 
@@ -276,8 +285,12 @@ class Region(object):
                     + np.abs(move) * (self.move_check_thickness - 1) + 1).astype(np.int32)
             plane_min[non_active_axis] = 0
             plane_max[non_active_axis] = 1
-            moves.append({'move': move, 'v': mask[plane_min[0]:plane_max[0], 
-                plane_min[1]:plane_max[1], plane_min[2]:plane_max[2]].max()})
+            
+            if CONFIG.model.move_exact:
+                print('add move exact here') 
+            else:   
+                moves.append({'move': move, 'v': mask[plane_min[0]:plane_max[0], 
+                    plane_min[1]:plane_max[1], plane_min[2]:plane_max[2]].max()})
         
         return moves
 
@@ -369,13 +382,15 @@ class Region(object):
                 queued_move = self.queue.get_nowait()
             except queue.Empty:
                 return None
-
+            
             next_pos = np.asarray(queued_move[1])
             next_vox = self.pos_to_vox(next_pos)
-            block_min, block_max, pad_pre, pad_post = self.get_block_bounds(next_vox, CONFIG.model.input_fov_shape)
+            block_min, block_max, pad_pre, pad_post = self.get_block_bounds(next_vox, 
+                    CONFIG.model.input_fov_shape)
 
             assert self.block_padding is not None or not (np.any(pad_pre) or np.any(pad_post)), \
-                'Position block extends out of region bounds, but padding is not enabled: {}'.format(next_pos)
+                'Position block extends out of region bounds, but padding is not enabled: {}'\
+                .format(next_pos)
 
             mask_block = self.mask[block_min[0]:block_max[0],
                                    block_min[1]:block_max[1],
@@ -475,8 +490,8 @@ class Region(object):
     class EarlyFillTermination(Exception):
         pass
 
-    def fill(self, model, progress=False, move_batch_size=1, max_moves=None, stopping_callback=None,
-             remask_interval=None, generator=False):
+    def fill(self, model, progress=False, move_batch_size=1, max_moves=None, 
+            stopping_callback=None, remask_interval=None, generator=False):
         """Flood fill this region.
 
         Note this returns a generator, so must be iterated to start filling.
@@ -529,19 +544,28 @@ class Region(object):
 
         if progress:
             pbar = tqdm(desc='Move queue', position=progress)
-        #i = 1
+        i = 1
+        z,y,x = self.mask.shape
+
         while not self.queue.empty():
             
-            #print(type(self.mask))
-            #mip = np.amax(self.mask, 0)
-            #print(mip.shape, mip.dtype)
-            #mip = np.floor(mip*255).astype('uint8')
-            #misc.imsave('step_' + str(i) + '.tif', mip)
-            #i += 1
-
+            if CONFIG.make_mask_video:
+                if i>1:
+                    mip = np.nanmax(self.mask, 0)
+                    if CONFIG.training.train_distance_transform:
+                        dst=np.zeros((y,x,3), dtype='uint8')
+                        idx = mip >= 0
+                        dst[:,:,0][idx] = (mip[idx]*255).astype('uint8')
+                        dst[:,:,2][np.logical_not(idx)] = (mip[np.logical_not(idx)]*255).astype('uint8')
+                        misc.imsave(self.volume_filename + '_step_' + str(i) + '.tif', dst)
+                    else:
+                        mip = np.floor(mip*255).astype('uint8')
+                        misc.imsave(self.volume_filename + '_step_' + str(i) + '.tif', mip)
+            i += 1
 
             batch_block_data = [self.get_next_block() for _ in
-                                itertools.takewhile(lambda _: not self.queue.empty(), range(move_batch_size))]
+                                itertools.takewhile(lambda _: not self.queue.empty(), 
+                                    range(move_batch_size))]
             batch_block_data = [b for b in batch_block_data if b is not None]
             batch_moves = len(batch_block_data)
             if batch_moves == 0:
@@ -549,7 +573,8 @@ class Region(object):
             moves += batch_moves
             if progress:
                 pbar.total = moves + self.queue.qsize()
-                pbar.set_description(str(self.seed_vox) + ' Move ' + str(batch_block_data[-1]['position']))
+                pbar.set_description(str(self.seed_vox) + ' Move ' + 
+                        str(batch_block_data[-1]['position']))
                 pbar.update(batch_moves)
 
             if stopping_callback is not None and moves - last_check >= STOP_CHECK_INTERVAL:
@@ -849,6 +874,11 @@ class Region(object):
 
 
 def mask_to_output_target(mask):
-    target = np.full_like(mask, CONFIG.model.v_false, dtype=np.float32)
-    target[mask] = CONFIG.model.v_true
+    
+    if CONFIG.training.train_distance_transform:
+        target = mask.copy() 
+    else:    
+        target = np.full_like(mask, CONFIG.model.v_false, dtype=np.float32)
+        target[mask] = CONFIG.model.v_true
+    
     return target

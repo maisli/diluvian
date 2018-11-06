@@ -304,14 +304,15 @@ def neuron_dt_seeds(image_data, seed_num):
         #thresh = image_data > 0
         transform = ndimage.distance_transform_cdt(thresh)
         seeds_per_label = peak_local_max(transform, exclude_border=0, min_distance=20)
-        if seed_num/len(labels) < len(seeds_per_label):
-            idx = np.random.choice(len(seeds_per_label), int(seed_num / len(labels)), 
+        seed_num_per_label = int(seed_num / len(labels))
+        if seed_num_per_label < len(seeds_per_label):
+            idx = np.random.choice(len(seeds_per_label), seed_num_per_label, 
                     replace=True)
             seeds_per_label = seeds_per_label[idx]
         if seeds == []:
             seeds = seeds_per_label
         else:
-            seeds = np.concatenate((seeds, seeds_per_label), axis=0) 
+            seeds = np.concatenate((seeds, seeds_per_label), axis=0)
     
     return seeds
 

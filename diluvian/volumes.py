@@ -26,6 +26,8 @@ from .octrees import OctreeVolume
 from .util import get_nonzero_aabb
 from . import preprocessing
 from datetime import datetime
+from matplotlib import pyplot as plt
+import pdb
 
 DimOrder = namedtuple('DimOrder', ('X', 'Y', 'Z'))
 
@@ -938,6 +940,15 @@ class Volume(object):
                     bounds.start[1]:bounds.stop[1],
                     bounds.start[2]:bounds.stop[2]]
             gt_seeds_subvol = self.world_mat_to_local(gt_seeds_subvol)
+
+        if CONFIG.training.train_distance_transform:
+            
+            bg = np.logical_not(label_mask)
+            dt = np.tanh(ndimage.distance_transform_edt(label_mask)/
+                    CONFIG.training.distance_transform_scaling)
+            dt[bg] = np.tanh(ndimage.distance_transform_edt(bg)/
+                    CONFIG.training.distance_transform_scaling)[bg] * (-1)
+            label_mask = dt
 
         return Subvolume(image_subvol, label_mask, seed, label_id, gt_seeds_subvol, 
                 label_subvol, bounds.start, bounds.stop)

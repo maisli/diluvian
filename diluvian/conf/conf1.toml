@@ -1,4 +1,5 @@
 random_seed = 1
+make_mask_video = false
 
 [volume]
 resolution = [1, 1, 1]
@@ -15,6 +16,7 @@ v_false = 0.05
 t_move = 0.9
 move_check_thickness = 1
 move_recheck = true
+move_exact = false
 
 [network]
 factory = 'diluvian.network.make_flood_fill_network'
@@ -37,27 +39,28 @@ nesterov = true
 gpu_batch_size = 8
 num_gpus = 1
 num_workers = 4
-training_size = 1024
-validation_size = 256
-total_epochs = 3
+training_size = 40704
+validation_size = 512
+total_epochs = 100
 reset_generators = false
-# fill_factor_bins = [0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.075,
-#                     0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 partitions = {".*" = [1, 1, 1]}
-training_partition = {"^(?!(0016|0017))" = [0, 0, 0]}
-validation_partition = {"^(0016|0017)" = [0, 0, 0]}
-patience = 4
+training_partition = {"^(?!(010|002))" = [0,0,0]}
+validation_partition = {"^(010|002)" = [0,0,0]}
+patience = 100
 label_erosion = []
 augment_use_both = false
 augment_missing_data = []
-augment_mirrors = [0,1,2]
+augment_mirrors = []
 augment_noise = []
-augment_permute_axes = [[2,1,0], [1,0,2], [1,2,0]]
+augment_permute_axes = []
 augment_contrast = []
-augment_permute_channels = true
-augment_density = true
-test_regex = "^(0018|0019)"
-train_regex = "^(?!(0018|0019))"
+augment_permute_channels = false
+augment_density = false
+test_regex = "^(011|003)"
+train_regex = "^(?!(011|003))"
 save_snapshots = ""
+save_gt_snapshots = "" #"/home/maisl/workspace/neuron_segmentation/output/110500/snapshots"
+train_distance_transform = false
+distance_transform_scaling = 5
 
 [postprocessing]
