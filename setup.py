@@ -3,7 +3,9 @@
 
 
 import pip
-from pip.req import parse_requirements
+#from pip.req import parse_requirements
+from pip._internal.req import parse_requirements
+from pip._internal import download
 from setuptools import setup
 
 
@@ -16,12 +18,12 @@ with open('HISTORY.rst') as history_file:
 
 parsed_requirements = parse_requirements(
     'requirements/prod.txt',
-    session=pip.download.PipSession()
+    session=download.PipSession()
 )
 
 parsed_test_requirements = parse_requirements(
     'requirements/test.txt',
-    session=pip.download.PipSession()
+    session=download.PipSession()
 )
 
 
