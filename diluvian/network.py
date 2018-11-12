@@ -24,9 +24,9 @@ from keras.layers.merge import (
         concatenate,
         )
 from keras.layers.core import Activation
+from keras.layers.advanced_activations import LeakyReLU
 from keras.models import load_model as keras_load_model, Model
 import keras.optimizers
-
 
 def make_flood_fill_network(input_fov_shape, output_fov_shape, network_config, input_channels):
     """Construct a stacked convolution module flood filling network.
@@ -46,12 +46,24 @@ def make_flood_fill_network(input_fov_shape, output_fov_shape, network_config, i
 
     # Convolve and activate before beginning the skip connection modules,
     # as discussed in the Appendix of He et al 2016.
-    ffn = Conv3D(
-            network_config.convolution_filters,
-            tuple(network_config.convolution_dim),
-            kernel_initializer=network_config.initialization,
-            activation=network_config.convolution_activation,
-            padding='same')(ffn)
+    if network_config.convolution_activation=='leakyrelu':
+        ffn = Conv3D(
+                network_config.convolution_filters,
+                tuple(network_config.convolution_dim),
+                kernel_initializer=network_config.initialization,
+                activation='linear',
+                padding='same')(ffn)
+        ffn = LeakyReLU(alpha=0.3)(ffn)
+
+    else:
+        ffn = Conv3D(
+                network_config.convolution_filters,
+                tuple(network_config.convolution_dim),
+                kernel_initializer=network_config.initialization,
+                activation=network_config.convolution_activation,
+                input_shape=(33,33,33,4),
+                data_format='channels_last',
+                padding='same')(ffn)
     if network_config.batch_normalization:
         ffn = BatchNormalization()(ffn)
 
@@ -88,12 +100,21 @@ def add_convolution_module(model, network_config):
     model2 = model
 
     for _ in range(network_config.num_layers_per_module):
-        model2 = Conv3D(
-                network_config.convolution_filters,
-                tuple(network_config.convolution_dim),
-                kernel_initializer=network_config.initialization,
-                activation=network_config.convolution_activation,
-                padding='same')(model2)
+        if network_config.convolution_activation=='leakyrelu':
+            model2 = Conv3D(
+                    network_config.convolution_filters,
+                    tuple(network_config.convolution_dim),
+                    kernel_initializer=network_config.initialization,
+                    activation='linear',
+                    padding='same')(model2)
+            model2 = LeakyReLU(alpha=0.3)(model2)
+        else:
+            model2 = Conv3D(
+                    network_config.convolution_filters,
+                    tuple(network_config.convolution_dim),
+                    kernel_initializer=network_config.initialization,
+                    activation=network_config.convolution_activation,
+                    padding='same')(model2)
         if network_config.batch_normalization:
             model2 = BatchNormalization()(model2)
 
@@ -103,7 +124,10 @@ def add_convolution_module(model, network_config):
     # likely to be important, see:
     # http://torch.ch/blog/2016/02/04/resnets.html
     # https://github.com/gcr/torch-residual-networks
-    model = Activation(network_config.convolution_activation)(model)
+    if network_config.convolution_activation == 'leakyrelu':
+        model = LeakyReLU(alpha=0.3)(model)
+    else:
+        model = Activation(network_config.convolution_activation)(model)
     if network_config.batch_normalization:
         model = BatchNormalization()(model)
     if network_config.dropout_probability > 0.0:
