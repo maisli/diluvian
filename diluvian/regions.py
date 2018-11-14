@@ -110,6 +110,8 @@ class Region(object):
         upper_bound = self.vox_to_pos(np.array(self.bounds) - 1 
                 - (CONFIG.model.input_fov_shape - 1) // 2)
         self.move_bounds = (lower_bound, upper_bound)
+        self.upper_vox_bounds = self.bounds - (CONFIG.model.input_fov_shape - 1) // 2
+        self.lower_vox_bounds = (CONFIG.model.input_fov_shape - 1) // 2
 
         self.move_check_thickness = CONFIG.model.move_check_thickness
         if mask is None:
@@ -139,9 +141,14 @@ class Region(object):
             seed_pos = self.vox_to_pos(seed_vox)
             assert self.pos_in_bounds(seed_pos), 'Seed position (%s) must be in region move bounds (%s, %s).' % (seed_vox, self.move_bounds[0], self.move_bounds[1])
         self.seed_pos = seed_pos
-        self.queue.put((None, seed_pos))
-        self.proximity[tuple(seed_pos)] = 1
         self.seed_vox = self.pos_to_vox(seed_pos)
+        if CONFIG.model.move_exact:
+            self.queue.put((None, self.seed_vox))
+            self.proximity[tuple(self.seed_vox)] = 1
+        else:
+            self.queue.put((None, seed_pos))
+            self.proximity[tuple(seed_pos)] = 1
+        
         if self.target is not None:
             self.target_offset = (self.bounds - self.target.shape) // 2
             if CONFIG.training.train_distance_transform:
@@ -190,6 +197,9 @@ class Region(object):
 
     def pos_to_vox(self, pos):
         return (pos * self.MOVE_DELTA).astype(np.int64) + self.MOVE_GRID_OFFSET
+
+    def vox_in_bounds(self, vox):
+        return np.all(vox <= self.upper_vox_bounds) and np.all(vox >= self.lower_vox_bounds)
 
     def pos_in_bounds(self, pos):
         if self.block_padding is None:
@@ -278,6 +288,7 @@ class Region(object):
 
         moves = []
         ctr = ((np.asarray(mask.shape) - 1) // 2 + 1).astype(np.int32)
+        
         for move in moves_active_axes:
             plane_min = (ctr - (-2 * np.maximum(move, 0) + 1) * self.MOVE_DELTA 
                     - np.abs(move) * (self.move_check_thickness - 1)).astype(np.int32)
@@ -286,11 +297,16 @@ class Region(object):
             plane_min[non_active_axis] = 0
             plane_max[non_active_axis] = 1
             
+            slices = tuple([slice(plane_min[i], plane_max[i]) for i in range(3)])
             if CONFIG.model.move_exact:
-                print('add move exact here') 
+                getcoord = np.zeros_like(mask)
+                idx = np.unravel_index(np.argmax(mask[slices], axis=None), mask[slices].shape)
+                getcoord[slices][idx] = 1
+                coords = np.asarray(np.unravel_index(np.argmax(getcoord, axis=None), 
+                    getcoord.shape))
+                moves.append({'move': coords, 'v': mask[slices].max()}) 
             else:   
-                moves.append({'move': move, 'v': mask[plane_min[0]:plane_max[0], 
-                    plane_min[1]:plane_max[1], plane_min[2]:plane_max[2]].max()})
+                moves.append({'move': move, 'v': mask[slices].max()})
         
         return moves
 
@@ -317,8 +333,12 @@ class Region(object):
         return np.nanmax(neighborhood) >= CONFIG.model.t_move
 
     def add_mask(self, mask_block, mask_pos):
-        mask_vox = self.pos_to_vox(mask_pos)
-        mask_min, mask_max, pad_pre, pad_post = self.get_block_bounds(mask_vox, np.asarray(mask_block.shape))
+        if CONFIG.model.move_exact:
+            mask_vox = mask_pos
+        else:    
+            mask_vox = self.pos_to_vox(mask_pos)
+        mask_min, mask_max, pad_pre, pad_post = self.get_block_bounds(mask_vox, 
+                np.asarray(mask_block.shape))
 
         if np.any(pad_pre) or np.any(pad_post):
             assert self.block_padding is not None, \
@@ -354,9 +374,14 @@ class Region(object):
             proximity = None
 
         for move in new_moves:
-            new_pos = mask_pos + move['move']
-            if not self.pos_in_bounds(new_pos):
-                continue
+            if CONFIG.model.move_exact:
+                new_pos = mask_vox + move['move']
+                if not self.vox_in_bounds(new_pos):
+                    continue
+            else:
+                new_pos = mask_pos + move['move']
+                if not self.pos_in_bounds(new_pos):
+                    continue
             if tuple(new_pos) not in self.visited and move['v'] >= CONFIG.model.t_move:
                 self.visited.add(tuple(new_pos))
                 priority = self.get_move_priority(new_pos, move['v'], proximity)
@@ -384,7 +409,10 @@ class Region(object):
                 return None
             
             next_pos = np.asarray(queued_move[1])
-            next_vox = self.pos_to_vox(next_pos)
+            if CONFIG.model.move_exact:
+                next_vox = next_pos
+            else: 
+                next_vox = self.pos_to_vox(next_pos)
             block_min, block_max, pad_pre, pad_post = self.get_block_bounds(next_vox, 
                     CONFIG.model.input_fov_shape)
 

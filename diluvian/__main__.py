@@ -166,6 +166,10 @@ def _make_main_parser():
             help='Reject seeds that terminate early, e.g., due to maximum '
                  'move limits.')
     fill_parser.add_argument(
+            '--reject-non-seed-components', action='store_true',
+            dest='reject_non_seed_components', default=False,
+            help='Reject non seed components')
+    fill_parser.add_argument(
             '--resume-file', dest='resume_filename', default=None,
             help='Filename for the TOML configuration file of a segmented '
                  'label volume from which to resume filling. The configuration '
@@ -337,6 +341,7 @@ def main():
                                 max_moves=args.max_moves,
                                 max_bodies=args.max_bodies,
                                 filter_seeds_by_mask=not args.ignore_mask,
+                                reject_non_seed_components=args.reject_non_seed_components,
                                 reject_early_termination=args.reject_early_termination,
                                 remask_interval=args.remask_interval,
                                 shuffle_seeds=args.shuffle_seeds,
