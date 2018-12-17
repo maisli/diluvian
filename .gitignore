@@ -63,9 +63,10 @@ target/
 
 # pyenv python configuration file
 .python-version
+.idea/
 
 # vim
 *.swp
 
 #conf and data files
-diluvian/conf/
+diluvian/conf/*.toml

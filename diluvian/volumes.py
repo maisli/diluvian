@@ -27,6 +27,7 @@ from .util import get_nonzero_aabb
 from . import preprocessing
 from datetime import datetime
 from matplotlib import pyplot as plt
+import colorsys
 import pdb
 
 DimOrder = namedtuple('DimOrder', ('X', 'Y', 'Z'))
@@ -900,7 +901,29 @@ class Volume(object):
 
         image_subvol = self.world_mat_to_local(image_subvol)
         if np.issubdtype(image_subvol.dtype, np.integer):
-            image_subvol = image_subvol.astype(np.float32) / 256.0
+            image_subvol = image_subvol.astype(np.float32) / 255.0
+            
+            """
+            if CONFIG.model.use_hsl:
+                
+                flatten = np.prod(image_subvol.shape[0:-1])
+                hsl = np.asarray([colorsys.rgb_to_hls(i[0], i[1], i[2]) for i in np.reshape(
+                    image_subvol, (flatten, 3))])
+                image_subvol = np.reshape(hsl, image_subvol.shape)
+                
+                image_subvol[:,:,:,1] = image_subvol[:,:,:,1] / 100.0
+                image_subvol[:,:,:,2] = image_subvol[:,:,:,2] / 100.0
+                else:
+                    image_subvol[:,:,:,0] = image_subvol[:,:,:,0] / 360.0
+            """
+        
+        if CONFIG.model.use_hue_vector:
+            z,y,x,c = image_subvol.shape
+            hue = np.zeros((z,y,x, c+1), dtype='float32')
+            hue[:,:,:,2:] = image_subvol[:,:,:,1:]
+            hue[:,:,:,0] = np.cos(np.radians(image_subvol[:,:,:,0]))
+            hue[:,:,:,1] = np.sin(np.radians(image_subvol[:,:,:,0]))
+            image_subvol = hue
             
         seed = bounds.seed
         if seed is None:

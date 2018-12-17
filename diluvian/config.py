@@ -93,6 +93,8 @@ class ModelConfig(BaseConfig):
         self.output_fov_shape = np.array(settings.get('output_fov_shape', [17, 33, 33]))
         self.output_fov_move_fraction = int(settings.get('output_fov_move_fraction', 4))
         self.input_channels = int(settings.get('input_channels', 1))
+        self.use_hsl = bool(settings.get('use_hsl', False))
+        self.use_hue_vector = bool(settings.get('use_hue_vector', False))
         self.v_true = float(settings.get('v_true', 0.95))
         self.v_false = float(settings.get('v_false', 0.05))
         self.t_move = float(settings.get('t_move', 0.9))
