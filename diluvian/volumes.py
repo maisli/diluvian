@@ -915,7 +915,6 @@ class Volume(object):
                 image_subvol[:,:,:,2] = image_subvol[:,:,:,2] / 100.0
                 else:
                     image_subvol[:,:,:,0] = image_subvol[:,:,:,0] / 360.0
-            """
         
         if CONFIG.model.use_hue_vector:
             z,y,x,c = image_subvol.shape
@@ -924,6 +923,7 @@ class Volume(object):
             hue[:,:,:,0] = np.cos(np.radians(image_subvol[:,:,:,0]))
             hue[:,:,:,1] = np.sin(np.radians(image_subvol[:,:,:,0]))
             image_subvol = hue
+            """
             
         seed = bounds.seed
         if seed is None:
@@ -1034,7 +1034,7 @@ class Volume(object):
                     if self.seeds_from_raw:
                         self.seeds = generator(self.volume.image_data)
                     elif seed_generator == 'neuron' or seed_generator == 'neuron_dt':
-                        self.seeds = generator(self.volume.label_data, 30000)
+                        self.seeds = generator(self.volume.label_data, 3000)
                     else:
                         self.seeds = generator(self.volume.label_data > 0)
                     self.seeds = [seed for seed in self.seeds if np.all(

@@ -623,7 +623,7 @@ def build_training_gen(training_volumes, seed_generator=None,
                                 shape=CONFIG.model.training_subv_shape,
                                 label_margin=output_margin,
                                 seed_generator=seed_generator,
-                                prng_seed=prng_seed_generator.randint(0,10000) 
+                                prng_seed=prng_seed_generator.randint(0, 3000) 
                                 if prng_seed_generator is not None else None,
                                 seeds_from_raw=seeds_from_raw)), training_volumes)
             for v in six.itervalues(training_volumes)]

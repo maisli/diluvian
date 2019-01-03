@@ -293,14 +293,21 @@ def neuron_seeds(image_data, seed_num):
 def neuron_dt_seeds(image_data, seed_num):
     
     from skimage.feature import peak_local_max
-    
+
     seeds = []
     image_data = np.asarray(image_data)
     # take seeds uniformly from labels
-    labels = np.unique(image_data)
+
+    labels, indices = np.unique(image_data, return_index=True)
     labels = np.delete(labels, 0)
-    for label in labels:
-        thresh = image_data == label
+    indices = np.delete(indices, 0)
+
+    for label, label_channel in zip(labels, indices):
+        if image_data.ndim == 4:
+            thresh = image_data[:, :, :, np.unravel_index(label_channel, 
+                image_data.shape)[3]] == label
+        else:
+            thresh = image_data == label
         #thresh = image_data > 0
         transform = ndimage.distance_transform_cdt(thresh)
         seeds_per_label = peak_local_max(transform, exclude_border=0, min_distance=20)
@@ -309,6 +316,10 @@ def neuron_dt_seeds(image_data, seed_num):
             idx = np.random.choice(len(seeds_per_label), seed_num_per_label, 
                     replace=True)
             seeds_per_label = seeds_per_label[idx]
+        if image_data.ndim == 4:
+            seeds_per_label = np.append(seeds_per_label, np.ones((seeds_per_label.shape[0],
+                1), dtype=seeds_per_label.dtype) * np.unravel_index(label_channel, 
+                    image_data.shape)[3], axis=1)
         if seeds == []:
             seeds = seeds_per_label
         else:
